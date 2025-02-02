@@ -12,8 +12,12 @@ public class AccountController {
     public AccountController(AccountService accountService) {
         this.accountService = accountService;
     }
-    @PostMapping("/createAccount")
+    @PostMapping("/createaccount")
     public String createAccount (@RequestBody Account accountDetails) {
         return accountService.createAccount(accountDetails);
+    }
+    @DeleteMapping("/deleteaccount/{accountNumber}")
+    public String deleteAccount(@PathVariable String accountNumber) {
+        return accountService.deleteAccount(accountNumber);
     }
 }

@@ -5,6 +5,8 @@ import com.bankingsystem.repositories.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +34,14 @@ public class AccountService extends Account {
             return "Apologies! Cannot make an account at the moment";
         }
     }
-    public void deleteAccount(Long id) {
-        accountRepository.deleteById(id);
+    @Transactional
+    public String deleteAccount(String accountNumber) {
+        Optional<Account> account = accountRepository.findByAccountNumber(accountNumber);
+        if (account.isPresent()) {
+            accountRepository.deleteByAccountNumber(accountNumber);
+            return "Account deleted successfully.";
+        } else {
+            return "Account not found.";
+        }
     }
 }
