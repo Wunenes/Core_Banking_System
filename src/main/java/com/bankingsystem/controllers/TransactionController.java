@@ -1,7 +1,7 @@
-package com.bankingsystem.controllers;
+package com.bankingSystem.controllers;
 
-import com.bankingsystem.services.TransactionService;
-import com.bankingsystem.models.Transaction;
+import com.bankingSystem.services.TransactionService;
+import com.bankingSystem.models.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

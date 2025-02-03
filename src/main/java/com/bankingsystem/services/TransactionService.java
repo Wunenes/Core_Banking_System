@@ -1,14 +1,14 @@
-package com.bankingsystem.services;
+package com.bankingSystem.services;
 
 import java.math.BigDecimal;
-import com.bankingsystem.models.Account;
-import com.bankingsystem.models.Transaction;
+import com.bankingSystem.models.Account;
+import com.bankingSystem.models.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import com.bankingsystem.repositories.AccountRepository;
-import com.bankingsystem.repositories.TransactionRepository;
+import com.bankingSystem.repositories.AccountRepository;
+import com.bankingSystem.repositories.TransactionRepository;
 
 
 @Service

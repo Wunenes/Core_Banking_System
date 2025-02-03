@@ -1,4 +1,4 @@
-package com.bankingsystem.services;
+package com.bankingSystem.services;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;

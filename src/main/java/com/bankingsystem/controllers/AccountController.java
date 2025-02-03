@@ -1,7 +1,7 @@
-package com.bankingsystem.controllers;
+package com.bankingSystem.controllers;
 
-import com.bankingsystem.models.Account;
-import com.bankingsystem.services.AccountService;
+import com.bankingSystem.models.Account;
+import com.bankingSystem.services.AccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

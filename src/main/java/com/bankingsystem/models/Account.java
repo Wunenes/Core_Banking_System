@@ -1,4 +1,4 @@
-package com.bankingsystem.models;
+package com.bankingSystem.models;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;

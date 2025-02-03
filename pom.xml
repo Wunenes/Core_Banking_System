@@ -3,11 +3,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Spring Boot Parent POM -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.2</version> <!-- Use the latest Spring Boot version -->
+        <version>3.4.2</version>
     </parent>
 
     <groupId>com.example</groupId>
@@ -16,8 +15,6 @@
     <packaging>jar</packaging>
 
     <dependencies>
-        <!-- Spring Boot Starter Data JPA -->
-
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
@@ -57,25 +54,25 @@
         <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
-            <version>3.1.0</version> <!-- Ensure you use a compatible version -->
+            <version>3.1.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>6.2.2</version> <!-- Make sure this is up-to-date -->
+            <version>6.2.2</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>6.2.2</version> <!-- Same as above -->
+            <version>6.2.2</version>
         </dependency>
     </dependencies>
 
     <properties>
-        <start-class>com.bankingsystem.BankingSystemApplication</start-class>
-        <java.version>23</java.version> <!-- Set Java version to 23 -->
+        <start-class>com.bankingSystem.BankingSystemApplication</start-class>
+        <java.version>23</java.version>
     </properties>
 
     <build>

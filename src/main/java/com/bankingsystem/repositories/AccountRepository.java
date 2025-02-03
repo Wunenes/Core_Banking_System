@@ -1,6 +1,6 @@
-package com.bankingsystem.repositories;
+package com.bankingSystem.repositories;
 
-import com.bankingsystem.models.Account;
+import com.bankingSystem.models.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

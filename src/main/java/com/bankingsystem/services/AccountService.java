@@ -1,7 +1,7 @@
-package com.bankingsystem.services;
+package com.bankingSystem.services;
 
-import com.bankingsystem.models.Account;
-import com.bankingsystem.repositories.AccountRepository;
+import com.bankingSystem.models.Account;
+import com.bankingSystem.repositories.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
