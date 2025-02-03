@@ -44,25 +44,15 @@ public class Account {
         this.accountNumber = accountNumber;
         this.balance = balance;
     }
-
-    //  Getter and Setter for accountNumber
     public String getAccountNumber() {
         return accountNumber;
     }
-
-    public void setAccountNumber(String accountNumber) {
-        this.accountNumber = accountNumber;
-    }
-
-    // Getter and Setter for balance
     public BigDecimal getBalance() {
         return balance;
     }
-
     public String getHolderName() {
         return holderName;
     }
-
     public String getPhoneNumber() {
         return phoneNumber;
     }
@@ -72,23 +62,21 @@ public class Account {
     public String getEmail() {
         return email;
     }
-
+    public void setAccountNumber(String accountNumber) {
+        this.accountNumber = accountNumber;
+    }
     public void setHolderName(String holderName){
         this.holderName = holderName;
     }
-
     public void setEmail(String email){
         this.email = email;
     }
-
     public void setIdNumber(String ID){
         this.idNumber = ID;
     }
-
     public void setPhoneNumber(String phoneNumber){
         this.phoneNumber = phoneNumber;
     }
-
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
     }
