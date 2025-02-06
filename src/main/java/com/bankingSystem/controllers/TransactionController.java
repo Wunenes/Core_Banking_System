@@ -20,8 +20,7 @@ public class TransactionController {
     public ResponseEntity<Transaction> deposit(@RequestParam String accountNumber, @RequestParam double amount) {
         return ResponseEntity.ok(transactionService.deposit(accountNumber, amount));
     }
-
-    @PostMapping("/transfer")
+    @PostMapping("/internal_transfer")
     public ResponseEntity<Transaction> transfer(
             @RequestParam String senderAccount,
             @RequestParam String receiverAccount,
