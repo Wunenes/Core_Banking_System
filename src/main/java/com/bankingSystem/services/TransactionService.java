@@ -14,7 +14,7 @@ import com.bankingSystem.repositories.AccountRepository;
 import com.bankingSystem.repositories.TransactionRepository;
 
 import static com.bankingSystem.generators.AccountNumberGenerator.checkSumAlgorithm;
-import static com.bankingSystem.generators.AccountNumberGenerator.letterToNumber;
+import static com.bankingSystem.generators.TransactionIdGenerator.letterToNumber;
 import static com.bankingSystem.generators.TransactionIdGenerator.transactionIdGenerator;
 
 

@@ -33,8 +33,6 @@ public class AccountService extends Account {
             account.setAccountNumber(accountNumberGenerator(account.getHolderName(), account.getIdNumber()));
             accountRepository.save(account);
             return "Account successfully created";
-        } catch (DataAccessException e) {
-            return "Sorry! Account already exists";
         } catch (Error error) {
             return "Apologies! Cannot make an account at the moment";
         }

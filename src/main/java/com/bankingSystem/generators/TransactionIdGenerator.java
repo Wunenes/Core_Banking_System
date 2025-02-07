@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import static com.bankingSystem.generators.AccountNumberGenerator.checkSumAlgorithm;
-import static com.bankingSystem.generators.AccountNumberGenerator.letterToNumber;
 
 public class TransactionIdGenerator {
     public static String transactionIdGenerator(String senderAccountNumber, String recipientAccountNumber, String type,
@@ -25,12 +24,16 @@ public class TransactionIdGenerator {
 
         UUID uuid = UUID.randomUUID();
         UUID hashedCompositeId = UUID.nameUUIDFromBytes((hashedName + uuid.toString()).getBytes());
-        String shortenedUuid = hashedCompositeId.toString().replace("-", "").substring(0, 2);
+        String shortenedUuid = hashedCompositeId.toString().replace("-", "").substring(0, 3);
         StringBuilder newUuid = new StringBuilder();
         for (char letter : shortenedUuid.toCharArray()) {
-            newUuid.append(letterToNumber(letter));
+            newUuid.append(String.format("%02d",letterToNumber(letter)));
         }
         String intToken = newUuid + checkSumAlgorithm(newUuid);
         return type + intToken + randomChars;
+    }
+    public static int letterToNumber(char letter) {
+        letter = Character.toUpperCase(letter);
+        return letter - 'A' + 17;
     }
 }
