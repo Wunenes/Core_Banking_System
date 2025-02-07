@@ -30,20 +30,19 @@ public class AccountNumberGenerator {
                 newUuid.append(letterToNumber(letter));
             }
 
-            return checkSumAlgorithm(newUuid);
+            return newUuid + checkSumAlgorithm(newUuid);
 
         } catch (Exception e) {
             AccountService.log.error("e: ", e);
         }
         return null;
     }
-    static String checkSumAlgorithm(StringBuilder newUuid){
-        String finalUuid = newUuid.toString();
-        String stringPlaceholder = finalUuid + "00";
+    public static String checkSumAlgorithm(StringBuilder newUuid){
+        String uuidString = newUuid.toString();
+        String stringPlaceholder = uuidString + "00";
         int modulo = Integer.parseInt(stringPlaceholder) % 42;
         int  checkDigits = (43 - modulo);
-        final String finalDigits = String.format("%02d", checkDigits);
-        return finalUuid + finalDigits;
+        return String.format("%02d", checkDigits);
     }
 
     public static int letterToNumber(char letter) {

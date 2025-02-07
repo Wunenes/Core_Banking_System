@@ -1,6 +1,9 @@
 package com.bankingSystem.services;
 
 import java.math.BigDecimal;
+import java.security.NoSuchAlgorithmException;
+import java.util.Random;
+
 import com.bankingSystem.models.Account;
 import com.bankingSystem.models.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +12,10 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import com.bankingSystem.repositories.AccountRepository;
 import com.bankingSystem.repositories.TransactionRepository;
+
+import static com.bankingSystem.generators.AccountNumberGenerator.checkSumAlgorithm;
+import static com.bankingSystem.generators.AccountNumberGenerator.letterToNumber;
+import static com.bankingSystem.generators.TransactionIdGenerator.transactionIdGenerator;
 
 
 @Service
@@ -19,7 +26,7 @@ public class TransactionService {
     TransactionRepository transactionRepository;
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public Transaction deposit(String receiverAccount, double amount) {
+    public Transaction deposit(String receiverAccount, double amount) throws NoSuchAlgorithmException {
         Account account = accountRepository.findByAccountNumber(receiverAccount)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
@@ -27,11 +34,28 @@ public class TransactionService {
         account.setBalance(BigDecimal.valueOf(account.getBalance().doubleValue() + amount));
         accountRepository.save(account);
 
-        Transaction transaction = new Transaction("ATM DEPOSIT", account, BigDecimal.valueOf(amount), "Holder");
+        Random random = new Random();
+
+        char letter1 = (char) ('A' + random.nextInt(26));
+        char letter2 = (char) ('A' + random.nextInt(26));
+        char letter3 = (char) ('A' + random.nextInt(26));
+        String randomLetters = "" + letter1 + letter2 + letter3;
+        char[] charArray = randomLetters.toCharArray();
+
+        StringBuilder charStrings = new StringBuilder();
+        for(char letter: charArray) {
+            charStrings.append(letterToNumber(letter));
+        }
+
+        String finalDigits = checkSumAlgorithm(charStrings);
+        String randomChars = "" + letter1 + letter2 + letter3 + finalDigits;
+
+        Transaction transaction = new Transaction("DEPOSIT", account, BigDecimal.valueOf(amount),
+                transactionIdGenerator("DEPOSIT", receiverAccount, "RKE", amount, randomChars));
         return transactionRepository.save(transaction);
     }
     @Transactional
-    public Transaction internalTransfer(String senderAccount, String receiverAccount, double amount) {
+    public Transaction internalTransfer(String senderAccount, String receiverAccount, double amount) throws NoSuchAlgorithmException {
         Account sender = accountRepository.findByAccountNumber(senderAccount)
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
 
@@ -51,7 +75,24 @@ public class TransactionService {
         accountRepository.save(sender);
         accountRepository.save(receiver);
 
-        Transaction transaction = new Transaction(sender, receiver, BigDecimal.valueOf(amount), "Holder");
+        Random random = new Random();
+
+        char letter1 = (char) ('A' + random.nextInt(26));
+        char letter2 = (char) ('A' + random.nextInt(26));
+        char letter3 = (char) ('A' + random.nextInt(26));
+        String randomLetters = "" + letter1 + letter2 + letter3;
+        char[] charArray = randomLetters.toCharArray();
+
+        StringBuilder charStrings = new StringBuilder();
+        for(char letter: charArray) {
+            charStrings.append(letterToNumber(letter));
+        }
+
+        String finalDigits = checkSumAlgorithm(charStrings);
+        String randomChars = "" + letter1 + letter2 + letter3 + finalDigits;
+
+        Transaction transaction = new Transaction(sender, receiver, BigDecimal.valueOf(amount),
+                transactionIdGenerator(senderAccount, receiverAccount, "RNI", amount, randomChars));
         return transactionRepository.save(transaction);
     }
 }
