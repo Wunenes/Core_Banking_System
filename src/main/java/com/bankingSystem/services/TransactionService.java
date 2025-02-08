@@ -51,7 +51,7 @@ public class TransactionService {
         String randomChars = "" + letter1 + letter2 + letter3 + finalDigits;
 
         Transaction transaction = new Transaction("DEPOSIT", account, BigDecimal.valueOf(amount),
-                transactionIdGenerator("DEPOSIT", receiverAccount, "RKE", amount, randomChars));
+                transactionIdGenerator("DEPOSIT", receiverAccount, "RKE", amount));
         return transactionRepository.save(transaction);
     }
     @Transactional
@@ -75,24 +75,8 @@ public class TransactionService {
         accountRepository.save(sender);
         accountRepository.save(receiver);
 
-        Random random = new Random();
-
-        char letter1 = (char) ('A' + random.nextInt(26));
-        char letter2 = (char) ('A' + random.nextInt(26));
-        char letter3 = (char) ('A' + random.nextInt(26));
-        String randomLetters = "" + letter1 + letter2 + letter3;
-        char[] charArray = randomLetters.toCharArray();
-
-        StringBuilder charStrings = new StringBuilder();
-        for(char letter: charArray) {
-            charStrings.append(letterToNumber(letter));
-        }
-
-        String finalDigits = checkSumAlgorithm(charStrings);
-        String randomChars = "" + letter1 + letter2 + letter3 + finalDigits;
-
         Transaction transaction = new Transaction(sender, receiver, BigDecimal.valueOf(amount),
-                transactionIdGenerator(senderAccount, receiverAccount, "RNI", amount, randomChars));
+                transactionIdGenerator(senderAccount, receiverAccount, "RNI", amount));
         return transactionRepository.save(transaction);
     }
 }

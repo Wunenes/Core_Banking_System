@@ -26,9 +26,9 @@ public class AccountNumberGenerator {
             throw new RuntimeException("Error generating user hash", e);
         }
     }
-    public static String checkSumAlgorithm(StringBuilder newUuid){
-        String uuidString = newUuid.toString();
-        String stringPlaceholder = uuidString + "00";
+    public static String checkSumAlgorithm(StringBuilder rawId){
+        String rawIdString = rawId.toString();
+        String stringPlaceholder = rawIdString + "00";
         long modulo = Long.parseLong(stringPlaceholder) % 42;
         long checkDigits = (43 - modulo);
         return String.format("%02d", checkDigits);
