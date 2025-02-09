@@ -1,5 +1,6 @@
 package com.bankingSystem.models;
 
+import com.bankingSystem.encryption.AttributeEncryptor;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,15 +14,18 @@ public class Transaction {
     private Long id;
 
     @Column(name = "sender_id", nullable = false)
+    @Convert(converter = AttributeEncryptor.class)
     private final String sender;
 
     @Column(name = "receiver_id", nullable = false)
+    @Convert(converter = AttributeEncryptor.class)
     private final String receiver;
 
     @Column(name = "amount", nullable = false)
     private final BigDecimal amount;
 
     @Column(name="Transaction id", nullable = false)
+    @Convert(converter = AttributeEncryptor.class)
     private final String transactionId;
 
     @Column(name = "time", nullable = false)

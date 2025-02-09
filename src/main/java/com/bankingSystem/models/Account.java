@@ -1,5 +1,6 @@
 package com.bankingSystem.models;
 
+import com.bankingSystem.encryption.AttributeEncryptor;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
@@ -11,18 +12,23 @@ public class Account {
     private Long id;
 
     @Column(nullable = false)
+    @Convert(converter = AttributeEncryptor.class)
     private String holderName;
 
     @Column(nullable = false)
+    @Convert(converter = AttributeEncryptor.class)
     private String idNumber;
 
     @Column(nullable = false)
+    @Convert(converter = AttributeEncryptor.class)
     private String email;
 
     @Column(nullable = false)
+    @Convert(converter = AttributeEncryptor.class)
     private String phoneNumber;
 
     @Column(nullable = false, unique = true)
+    @Convert(converter = AttributeEncryptor.class)
     private String accountNumber;
 
     @Column(nullable = false)

@@ -20,8 +20,8 @@ public class AccountController {
     public String createAccount (@RequestBody Account accountDetails) {
         return accountService.createAccount(accountDetails);
     }
-    @DeleteMapping("/delete/{accountNumber}")
-    public String deleteAccount(@PathVariable String accountNumber) {
+    @DeleteMapping("/delete")
+    public String deleteAccount(@RequestParam String accountNumber) {
         return accountService.deleteAccount(accountNumber);
     }
 
@@ -70,8 +70,8 @@ public class AccountController {
             this.idNumber = ID;
         }
     }
-    @GetMapping("/get/{accountNumber}")
-    public ResponseEntity<AccountResponseDTO> getAccount(@PathVariable String accountNumber) {
+    @GetMapping("/get")
+    public ResponseEntity<AccountResponseDTO> getAccount(@RequestParam String accountNumber) {
         Optional<Account> account = accountService.getByAccountNumber(accountNumber);
         if (account.isPresent()) {
             Account userAccount = account.get();
