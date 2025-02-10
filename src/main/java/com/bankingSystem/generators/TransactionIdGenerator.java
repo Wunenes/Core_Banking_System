@@ -32,7 +32,8 @@ public class TransactionIdGenerator {
         byte[] hashedBytes = digest.digest(compositeDetails.getBytes(StandardCharsets.UTF_8));
         StringBuilder hashedName = new StringBuilder();
         for (byte b: hashedBytes) {
-            hashedName.append(String.format("%02x", (b & 0xFF) % 100));
+            int numericValue = (b & 0xFF) % 100;
+            hashedName.append(String.format("%02d", numericValue));
         }
         return hashedName.toString();
     }

@@ -55,7 +55,7 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
     @Transactional
-    public Transaction internalTransfer(String senderAccount, String receiverAccount, double amount) throws NoSuchAlgorithmException {
+    public String internalTransfer(String senderAccount, String receiverAccount, double amount) throws NoSuchAlgorithmException {
         Account sender = accountRepository.findByAccountNumber(senderAccount)
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
 
@@ -72,11 +72,13 @@ public class TransactionService {
         sender.setBalance(BigDecimal.valueOf(senderBalance - amount));
         receiver.setBalance(BigDecimal.valueOf(receiverBalance + amount));
 
+
         accountRepository.save(sender);
         accountRepository.save(receiver);
 
         Transaction transaction = new Transaction(sender, receiver, BigDecimal.valueOf(amount),
                 transactionIdGenerator(senderAccount, receiverAccount, "RNI", amount));
-        return transactionRepository.save(transaction);
+        transactionRepository.save(transaction);
+        return transaction.getTransactionId();
     }
 }

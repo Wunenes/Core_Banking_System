@@ -8,28 +8,30 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "transactions")
 public class Transaction {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "sender_id", nullable = false)
     @Convert(converter = AttributeEncryptor.class)
-    private final String sender;
+    private String sender;
 
     @Column(name = "receiver_id", nullable = false)
     @Convert(converter = AttributeEncryptor.class)
-    private final String receiver;
+    private String receiver;
 
     @Column(name = "amount", nullable = false)
-    private final BigDecimal amount;
+    private BigDecimal amount;
 
     @Column(name="Transaction id", nullable = false)
     @Convert(converter = AttributeEncryptor.class)
-    private final String transactionId;
+    private String transactionId;
 
     @Column(name = "time", nullable = false)
-    private final LocalDateTime timestamp;
+    private LocalDateTime timestamp;
+
+    public Transaction(){
+    }
 
     public Transaction(String sender, Account receiver, BigDecimal amount, String Transaction_ID) {
         this.sender = sender;
