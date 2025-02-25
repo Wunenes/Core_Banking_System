@@ -3,6 +3,8 @@ package com.bankingSystem.models;
 import com.bankingSystem.encryption.AttributeEncryptor;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "accounts")
@@ -13,42 +15,50 @@ public class Account {
 
     @Column(nullable = false)
     @Convert(converter = AttributeEncryptor.class)
-    private String holderName;
+    private String accountType;
 
     @Column(nullable = false)
     @Convert(converter = AttributeEncryptor.class)
-    private String idNumber;
+    private String currencyType;
 
     @Column(nullable = false)
     @Convert(converter = AttributeEncryptor.class)
-    private String email;
+    private String status;
 
     @Column(nullable = false)
-    @Convert(converter = AttributeEncryptor.class)
-    private String phoneNumber;
+    private LocalDateTime time;
 
     @Column(nullable = false, unique = true)
     @Convert(converter = AttributeEncryptor.class)
     private String accountNumber;
 
     @Column(nullable = false)
+    private UUID userId;
+
+    @Column(nullable = false)
     protected BigDecimal balance;
 
     public Account() {}
 
-    public Account(String accountNumber, String holderName, String idNumber, String email, String phoneNumber,
-                   BigDecimal balance) {
+    public Account(String accountNumber, String accountType, String currencyType, String status, LocalDateTime time,
+                   BigDecimal balance, UUID userId) {
         this.accountNumber = accountNumber;
-        this.holderName = holderName;
-        this.idNumber = idNumber;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
+        this.accountType = accountType;
+        this.currencyType = currencyType;
+        this.status = status;
+        this.userId = userId;
         this.balance = balance;
+        this.time = LocalDateTime.now();
     }
 
     public Account(String accountNumber, BigDecimal balance) {
         this.accountNumber = accountNumber;
         this.balance = balance;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.time = LocalDateTime.now();
     }
     public String getAccountNumber() {
         return accountNumber;
@@ -56,32 +66,35 @@ public class Account {
     public BigDecimal getBalance() {
         return balance;
     }
-    public String getHolderName() {
-        return holderName;
+    public String getAccountType() {
+        return accountType;
     }
-    public String getPhoneNumber() {
-        return phoneNumber;
+    public LocalDateTime getTime() {
+        return time;
     }
-    public String getIdNumber() {
-        return idNumber;
+    public String getCurrencyType() {
+        return currencyType;
     }
-    public String getEmail() {
-        return email;
+    public String getStatus() {
+        return status;
+    }
+    public UUID getUserId() {
+        return userId;
+    }
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
     public void setAccountNumber(String accountNumber) {
         this.accountNumber = accountNumber;
     }
-    public void setHolderName(String holderName){
-        this.holderName = holderName;
+    public void setAccountType(String accountType){
+        this.accountType = accountType;
     }
-    public void setEmail(String email){
-        this.email = email;
+    public void setStatus(String status){
+        this.status = status;
     }
-    public void setIdNumber(String ID){
-        this.idNumber = ID;
-    }
-    public void setPhoneNumber(String phoneNumber){
-        this.phoneNumber = phoneNumber;
+    public void setCurrencyType(String ID){
+        this.currencyType = ID;
     }
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
