@@ -5,13 +5,9 @@ import com.bankingSystem.repositories.TransactionRepository;
 import com.bankingSystem.models.Transaction;
 import com.bankingSystem.services.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -45,7 +41,7 @@ public class TransactionController {
             @RequestParam String email,
             @RequestParam String fromCurrency,
             @RequestParam String toCurrency,
-            @RequestParam double amount){
+            @RequestParam double amount) throws NoSuchAlgorithmException {
         forexService.exchange(email, toCurrency, fromCurrency, amount);
     }
 

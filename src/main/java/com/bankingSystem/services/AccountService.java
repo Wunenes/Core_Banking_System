@@ -52,11 +52,13 @@ public class AccountService extends Account {
         private String status;
         private BigDecimal balance;
         private String currencyType;
-        public AccountResponseDTO(String type, String status, BigDecimal balance, String currencyType) {
+        private String accountNumber;
+        public AccountResponseDTO(String type, String status, BigDecimal balance, String currencyType, String accountNumber) {
             this.type = type;
             this.status = status;
             this.balance = balance;
             this.currencyType = currencyType;
+            this.accountNumber = accountNumber;
         }
         public String getType() {
             return type;
@@ -72,6 +74,12 @@ public class AccountService extends Account {
         }
         public BigDecimal getBalance() {
             return balance;
+        }
+        public String getAccountNumber(){
+            return accountNumber;
+        }
+        public void setAccountNumber(String accountNumber){
+            this.accountNumber = accountNumber;
         }
         public void setBalance(BigDecimal balance) {
             this.balance = balance;
@@ -94,17 +102,18 @@ public class AccountService extends Account {
 
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new AccountResponseDTO("", "", BigDecimal.valueOf(0.0), ""));
+                    .body(new AccountResponseDTO("", "", BigDecimal.valueOf(0.0), "", ""));
         }
     }
 
     static AccountResponseDTO getAccountResponseDTO(Account userAccount) {
         AccountResponseDTO response = new AccountResponseDTO(userAccount.getAccountType(),
-                userAccount.getStatus(), userAccount.getBalance(), userAccount.getCurrencyType());
+                userAccount.getStatus(), userAccount.getBalance(), userAccount.getCurrencyType(), userAccount.getAccountNumber());
         response.setType(userAccount.getAccountType());
         response.setStatus(userAccount.getStatus());
         response.setBalance(userAccount.getBalance());
         response.setCurrencyType(userAccount.getCurrencyType());
+        response.setAccountNumber(userAccount.getAccountNumber());
         return response;
     }
 }
