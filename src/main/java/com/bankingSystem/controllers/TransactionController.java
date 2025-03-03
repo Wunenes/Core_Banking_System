@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
-
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/transactions")
 public class TransactionController {
@@ -25,24 +25,19 @@ public class TransactionController {
         this.forexService = forexService;
     }
     @PostMapping("/deposit")
-    public ResponseEntity<Transaction> deposit(@RequestParam String accountNumber, @RequestParam double amount) throws NoSuchAlgorithmException {
-        return ResponseEntity.ok(transactionService.deposit(accountNumber, amount));
+    public ResponseEntity<Transaction> deposit(@RequestBody TransactionService.TransactionResponseDTO depositBody) throws NoSuchAlgorithmException {
+        System.out.println("Received deposit request: " + depositBody.getReceiver() + ", " + depositBody.getAmount());
+        return ResponseEntity.ok(transactionService.deposit(depositBody));
     }
     @PostMapping("/internal_transfer")
-    public String transfer(
-            @RequestParam String senderAccount,
-            @RequestParam String receiverAccount,
-            @RequestParam double amount) throws NoSuchAlgorithmException {
-        return transactionService.internalTransfer(senderAccount, receiverAccount, amount);
+    public String transfer(@RequestBody TransactionService.TransactionResponseDTO transactionBody) throws NoSuchAlgorithmException {
+        return transactionService.internalTransfer(transactionBody);
     }
 
     @PostMapping("/forex")
-    public void forex(
-            @RequestParam String email,
-            @RequestParam String fromCurrency,
-            @RequestParam String toCurrency,
-            @RequestParam double amount) throws NoSuchAlgorithmException {
-        forexService.exchange(email, toCurrency, fromCurrency, amount);
+    public String forex(
+            @RequestBody ForexService.ForexRequest forexBody) throws NoSuchAlgorithmException {
+        return forexService.exchange(forexBody);
     }
 
     @GetMapping("/get/transactionId")

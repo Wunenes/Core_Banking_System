@@ -33,7 +33,10 @@ public class TransactionService {
     UsersRepository usersRepository;
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public Transaction deposit(String receiverAccount, double amount) throws NoSuchAlgorithmException {
+    public Transaction deposit(TransactionResponseDTO depositResponse) throws NoSuchAlgorithmException {
+        String receiverAccount = depositResponse.getReceiver();
+        double amount = depositResponse.getAmount().doubleValue();
+
         Account account = accountRepository.findByAccountNumber(receiverAccount)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
@@ -50,7 +53,11 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
     @Transactional
-    public String internalTransfer(String senderAccount, String receiverAccount, double amount) throws NoSuchAlgorithmException {
+    public String internalTransfer(TransactionResponseDTO transactionResponse) throws NoSuchAlgorithmException {
+        String senderAccount = transactionResponse.getSender();
+        String receiverAccount = transactionResponse.getReceiver();
+        BigDecimal amount = transactionResponse.getAmount();
+
         Account sender = accountRepository.findByAccountNumber(senderAccount)
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
 
@@ -60,15 +67,15 @@ public class TransactionService {
         double senderBalance = sender.getBalance().doubleValue();
         double receiverBalance = receiver.getBalance().doubleValue();
 
-        if (senderBalance < amount) {
-            Transaction transaction = new Transaction(sender, receiver, BigDecimal.valueOf(amount),
-                    transactionIdGenerator(senderAccount, receiverAccount, "RFT", amount), "FAILED", sender.getCurrencyType(), "FAILED TRANSACTION");
+        if (senderBalance < amount.doubleValue()) {
+            Transaction transaction = new Transaction(sender, receiver, BigDecimal.valueOf(amount.doubleValue()),
+                    transactionIdGenerator(senderAccount, receiverAccount, "RFT", amount.doubleValue()), "FAILED", sender.getCurrencyType(), "FAILED TRANSACTION");
             transactionRepository.save(transaction);
             throw new RuntimeException("Insufficient balance");
         }
 
-        sender.setBalance(BigDecimal.valueOf(senderBalance - amount));
-        receiver.setBalance(BigDecimal.valueOf(receiverBalance + amount));
+        sender.setBalance(BigDecimal.valueOf(senderBalance - amount.doubleValue()));
+        receiver.setBalance(BigDecimal.valueOf(receiverBalance + amount.doubleValue()));
 
 
         accountRepository.save(sender);
@@ -81,23 +88,25 @@ public class TransactionService {
         Optional<Users> recipientUser = usersRepository.findByUserId(receiverUserId);
         String recipientName = recipientUser.get().getUserName();
 
-        Transaction transaction = new Transaction(sender, receiver, BigDecimal.valueOf(amount),
-                transactionIdGenerator(senderAccount, receiverAccount, "RNI", amount), "SUCCESSFUL", sender.getCurrencyType(), recipientName);
+        Transaction transaction = new Transaction(sender, receiver, amount,
+                transactionIdGenerator(senderAccount, receiverAccount, "RNI", amount.doubleValue()), "SUCCESSFUL", sender.getCurrencyType(), recipientName);
         transactionRepository.save(transaction);
         return transaction.getTransactionId();
     }
 
     public static class TransactionResponseDTO {
-        private final String sender;
-        private final String receiver;
-        private final String timestamp;
-        private final BigDecimal amount;
-        private final String description;
-        private final String currency;
-        private final String toCurrency;
-        private final String fromCurrency;
-        private final String transactionId;
+        private String sender;
+        private String receiver;
+        private String timestamp;
+        private BigDecimal amount;
+        private String description;
+        private String currency;
+        private String toCurrency;
+        private String fromCurrency;
+        private String transactionId;
 
+        // Default constructor for Jackson
+        public TransactionResponseDTO() {}
 
         public TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency) {
             this.sender = sender;
@@ -110,6 +119,7 @@ public class TransactionService {
             this.toCurrency = null;
             this.fromCurrency = null;
         }
+
         public TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency, String toCurrency, String fromCurrency) {
             this.sender = sender;
             this.receiver = receiver;
@@ -123,24 +133,31 @@ public class TransactionService {
         }
 
         public String getSender() { return sender; }
-        public String getReceiver() { return receiver; }
-        public BigDecimal getAmount() { return amount; }
-        public String getTimestamp() { return timestamp; }
-        public String getTransactionId() { return transactionId; }
-        public String getDescription() { return description; }
-        public String getCurrency() { return currency; }
-        public String getFromCurrency() { return fromCurrency; }
-        public String getToCurrency() { return toCurrency; }
+        public void setSender(String sender) { this.sender = sender; }
 
-        public void setSender(String sender) {}
-        public void setReceiver(String receiver) {}
-        public void setAmount(BigDecimal amount) {}
-        public void setTimestamp(LocalDateTime timestamp) {}
-        public void setTransactionId(String transactionId) {}
-        public void setDescription(String description) {}
-        public void setCurrency(String currency) {}
-        public void setFromCurrency(String fromCurrency) {}
-        public void setToCurrency(String toCurrency) {}
+        public String getReceiver() { return receiver; }
+        public void setReceiver(String receiver) { this.receiver = receiver; }
+
+        public BigDecimal getAmount() { return amount; }
+        public void setAmount(BigDecimal amount) { this.amount = amount; }
+
+        public String getTimestamp() { return timestamp; }
+        public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp.toString(); }
+
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+
+        public String getCurrency() { return currency; }
+        public void setCurrency(String currency) { this.currency = currency; }
+
+        public String getToCurrency() { return toCurrency; }
+        public void setToCurrency(String toCurrency) { this.toCurrency = toCurrency; }
+
+        public String getFromCurrency() { return fromCurrency; }
+        public void setFromCurrency(String fromCurrency) { this.fromCurrency = fromCurrency; }
+
+        public String getTransactionId() { return transactionId; }
+        public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
 
         // Overriding equals() method to compare TransactionResponseDTO objects by their fields
         @Override
