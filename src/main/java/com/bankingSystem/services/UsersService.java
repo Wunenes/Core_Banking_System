@@ -17,16 +17,16 @@ import java.util.stream.Collectors;
 
 @Service
 public class UsersService extends Users {
-    private final UsersRepository usersRepository;
+    private static UsersRepository usersRepository = null;
     private final AccountService accountService;
-    final AccountRepository accountRepository;
+    static AccountRepository accountRepository = null;
     final TransactionRepository transactionRepository;
 
     @Autowired
     public UsersService(UsersRepository usersRepository, AccountService accountService, AccountRepository accountRepository, TransactionRepository transactionRepository) {
-        this.usersRepository = usersRepository;
+        UsersService.usersRepository = usersRepository;
         this.accountService = accountService;
-        this.accountRepository = accountRepository;
+        UsersService.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
     }
 
@@ -39,6 +39,18 @@ public class UsersService extends Users {
     }
     public Optional<Users> getByUserId(UUID userId) {
         return usersRepository.findByUserId(userId);
+    }
+
+    public static String getByUserAccountNumber(String accountNumber) {
+        Optional<Account> account = accountRepository.findByAccountNumber(accountNumber);
+        if (account.isPresent()) {
+            Optional<Users> user = usersRepository.findByUserId(account.get().getUserId());
+            if (user.isPresent()) {
+                System.out.println(user.get().getUserName());
+                return user.get().getUserName(); // Return the user's name
+            }
+        }
+        return accountNumber; // Fallback to account number if user not found
     }
 
     public String createUser(Users user){
@@ -91,7 +103,7 @@ public class UsersService extends Users {
             while (iterator.hasNext()) {
                 TransactionService.TransactionResponseDTO response = iterator.next();
                 if (response.getDescription().equals("CURRENCY EXCHANGE")){
-                    if(Objects.equals(response.getReceiver(), account.getAccountNumber())) {
+                    if(Objects.equals(response.getReceiverName(), account.getAccountNumber())) {
                         iterator.remove();
                     } else {
                         Transaction forexTransaction = transactionRepository.findByTransactionId(response.getTransactionId());
@@ -125,8 +137,8 @@ public class UsersService extends Users {
     private TransactionService.TransactionResponseDTO getTransactionResponseDTO(Transaction transaction) {
         TransactionService.TransactionResponseDTO response = new TransactionService.TransactionResponseDTO(transaction.getSender(),
                 transaction.getReceiver(), transaction.getTransactionId(), transaction.getAmount(), transaction.getTimestamp().toString(), transaction.getDescription(), transaction.getCurrency());
-        response.setSender(transaction.getSender());
-        response.setReceiver(transaction.getReceiver());
+        response.setSenderName(transaction.getSender());
+        response.setReceiverName(transaction.getReceiver());
         response.setAmount(transaction.getAmount());
         response.setTransactionId(transaction.getTransactionId());
         response.setTimestamp(transaction.getTimestamp());
@@ -138,8 +150,8 @@ public class UsersService extends Users {
     private TransactionService.TransactionResponseDTO getForexResponseDTO(Transaction transaction) {
         TransactionService.TransactionResponseDTO response = new TransactionService.TransactionResponseDTO(transaction.getSender(),
                 transaction.getReceiver(), transaction.getTransactionId(), transaction.getAmount(), transaction.getTimestamp().toString(), transaction.getDescription(), transaction.getCurrency(), transaction.getToCurrency(), transaction.getFromCurrency());
-        response.setSender(transaction.getSender());
-        response.setReceiver(transaction.getReceiver());
+        response.setSenderName(transaction.getSender());
+        response.setReceiverName(transaction.getReceiver());
         response.setAmount(transaction.getAmount());
         response.setTransactionId(transaction.getTransactionId());
         response.setTimestamp(transaction.getTimestamp());

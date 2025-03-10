@@ -1,8 +1,6 @@
 package com.bankingSystem.controllers;
 
 import com.bankingSystem.models.Users;
-import com.bankingSystem.repositories.AccountRepository;
-import com.bankingSystem.repositories.UsersRepository;
 import com.bankingSystem.services.AccountService;
 import com.bankingSystem.services.TransactionService;
 import com.bankingSystem.services.UsersService;
@@ -14,13 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/users")
 public class UsersController {
     final UsersService usersService;
 
-    public UsersController(UsersService usersService, UsersRepository usersRepository, AccountService accountService, AccountRepository accountRepository, AccountController accountController) {
+    public UsersController(UsersService usersService) {
         this.usersService = usersService;
     }
 

@@ -34,7 +34,7 @@ public class TransactionService {
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction deposit(TransactionResponseDTO depositResponse) throws NoSuchAlgorithmException {
-        String receiverAccount = depositResponse.getReceiver();
+        String receiverAccount = depositResponse.getReceiverName();
         double amount = depositResponse.getAmount().doubleValue();
 
         Account account = accountRepository.findByAccountNumber(receiverAccount)
@@ -54,8 +54,8 @@ public class TransactionService {
     }
     @Transactional
     public String internalTransfer(TransactionResponseDTO transactionResponse) throws NoSuchAlgorithmException {
-        String senderAccount = transactionResponse.getSender();
-        String receiverAccount = transactionResponse.getReceiver();
+        String senderAccount = transactionResponse.getSenderName();
+        String receiverAccount = transactionResponse.getReceiverName();
         BigDecimal amount = transactionResponse.getAmount();
 
         Account sender = accountRepository.findByAccountNumber(senderAccount)
@@ -95,8 +95,8 @@ public class TransactionService {
     }
 
     public static class TransactionResponseDTO {
-        private String sender;
-        private String receiver;
+        private String senderName;
+        private String receiverName;
         private String timestamp;
         private BigDecimal amount;
         private String description;
@@ -105,12 +105,11 @@ public class TransactionService {
         private String fromCurrency;
         private String transactionId;
 
-        // Default constructor for Jackson
         public TransactionResponseDTO() {}
 
         public TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency) {
-            this.sender = sender;
-            this.receiver = receiver;
+            this.senderName = sender;
+            this.receiverName = receiver;
             this.amount = amount;
             this.timestamp = timeStamp;
             this.transactionId = transactionId;
@@ -121,8 +120,8 @@ public class TransactionService {
         }
 
         public TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency, String toCurrency, String fromCurrency) {
-            this.sender = sender;
-            this.receiver = receiver;
+            this.senderName = sender;
+            this.receiverName = receiver;
             this.amount = amount;
             this.timestamp = timeStamp;
             this.transactionId = transactionId;
@@ -132,11 +131,11 @@ public class TransactionService {
             this.fromCurrency = fromCurrency;
         }
 
-        public String getSender() { return sender; }
-        public void setSender(String sender) { this.sender = sender; }
+        public String getSenderName() { return senderName; }
+        public void setSenderName(String sender) { this.senderName =  UsersService.getByUserAccountNumber(sender); }
 
-        public String getReceiver() { return receiver; }
-        public void setReceiver(String receiver) { this.receiver = receiver; }
+        public String getReceiverName() { return receiverName; }
+        public void setReceiverName(String receiver) { this.receiverName = UsersService.getByUserAccountNumber(receiver); }
 
         public BigDecimal getAmount() { return amount; }
         public void setAmount(BigDecimal amount) { this.amount = amount; }
@@ -165,8 +164,8 @@ public class TransactionService {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             TransactionResponseDTO that = (TransactionResponseDTO) o;
-            return Objects.equals(sender, that.sender) &&
-                    Objects.equals(receiver, that.receiver) &&
+            return Objects.equals(senderName, that.senderName) &&
+                    Objects.equals(receiverName, that.receiverName) &&
                     Objects.equals(timestamp, that.timestamp) &&
                     Objects.equals(amount, that.amount) &&
                     Objects.equals(transactionId, that.transactionId);
@@ -174,7 +173,7 @@ public class TransactionService {
 
         @Override
         public int hashCode() {
-            return Objects.hash(sender, receiver, timestamp, amount, transactionId);
+            return Objects.hash(senderName, receiverName, timestamp, amount, transactionId);
         }
     }
 
@@ -230,31 +229,23 @@ public class TransactionService {
         return ResponseEntity.ok(responseList);
     }
 
-    private TransactionService.TransactionResponseDTO getTransactionResponseDTO(Transaction transaction) {
-        TransactionService.TransactionResponseDTO response = new TransactionResponseDTO(transaction.getSender(),
-                transaction.getReceiver(), transaction.getTransactionId(), transaction.getAmount(), transaction.getTimestamp().toString(), transaction.getDescription(), transaction.getCurrency());
-        response.setSender(transaction.getSender());
-        response.setReceiver(transaction.getReceiver());
-        response.setAmount(transaction.getAmount());
-        response.setTransactionId(transaction.getTransactionId());
-        response.setTimestamp(transaction.getTimestamp());
-        response.setDescription(transaction.getDescription());
-        response.setCurrency(transaction.getCurrency());
-        return response;
+    private TransactionResponseDTO getTransactionResponseDTO(Transaction transaction) {
+        String senderAccountNumber = transaction.getSender();
+        String receiverAccountNumber = transaction.getReceiver();
+
+        // Fetch user names from account numbers
+        String senderName = UsersService.getByUserAccountNumber(senderAccountNumber);
+        String receiverName = UsersService.getByUserAccountNumber(receiverAccountNumber);
+
+        return new TransactionResponseDTO(
+                senderName,
+                receiverName,
+                "",
+                transaction.getAmount(),
+                "",
+                "",
+                ""
+        );
     }
 
-    private TransactionService.TransactionResponseDTO getForexResponseDTO(Transaction transaction) {
-        TransactionService.TransactionResponseDTO response = new TransactionResponseDTO(transaction.getSender(),
-                transaction.getReceiver(), transaction.getTransactionId(), transaction.getAmount(), transaction.getTimestamp().toString(), transaction.getDescription(), transaction.getCurrency(), transaction.getToCurrency(), transaction.getFromCurrency());
-        response.setSender(transaction.getSender());
-        response.setReceiver(transaction.getReceiver());
-        response.setAmount(transaction.getAmount());
-        response.setTransactionId(transaction.getTransactionId());
-        response.setTimestamp(transaction.getTimestamp());
-        response.setDescription(transaction.getDescription());
-        response.setCurrency(transaction.getCurrency());
-        response.setToCurrency(transaction.getToCurrency());
-        response.setFromCurrency(transaction.getFromCurrency());
-        return response;
-    }
 }

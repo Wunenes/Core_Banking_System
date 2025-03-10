@@ -10,8 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:3000")
+
 @RestController
+@CrossOrigin(origins = "http://localhost:3000, http://192.168.100.6:3000")
 @RequestMapping("/api/transactions")
 public class TransactionController {
     @Autowired
@@ -26,7 +27,7 @@ public class TransactionController {
     }
     @PostMapping("/deposit")
     public ResponseEntity<Transaction> deposit(@RequestBody TransactionService.TransactionResponseDTO depositBody) throws NoSuchAlgorithmException {
-        System.out.println("Received deposit request: " + depositBody.getReceiver() + ", " + depositBody.getAmount());
+        System.out.println("Received deposit request: " + depositBody.getReceiverName() + ", " + depositBody.getAmount());
         return ResponseEntity.ok(transactionService.deposit(depositBody));
     }
     @PostMapping("/internal_transfer")
