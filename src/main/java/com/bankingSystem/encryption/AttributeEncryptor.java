@@ -15,7 +15,7 @@ import java.util.Properties;
 @Converter
 public class AttributeEncryptor implements AttributeConverter<String, String> {
 
-    @Value("${KEY}")
+    @Value("${encryption.key}")
     private String KEY;
 
     @Override

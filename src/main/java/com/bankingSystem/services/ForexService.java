@@ -7,6 +7,8 @@ import com.bankingSystem.repositories.AccountRepository;
 import com.bankingSystem.repositories.TransactionRepository;
 import com.bankingSystem.repositories.UsersRepository;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -21,6 +23,8 @@ import java.util.UUID;
 
 import static com.bankingSystem.generators.TransactionIdGenerator.transactionIdGenerator;
 
+
+@Component
 @Service
 public class ForexService {
     UsersRepository usersRepository;
@@ -28,6 +32,9 @@ public class ForexService {
     AccountService accountService;
     AccountRepository accountRepository;
     TransactionRepository transactionRepository;
+
+    @Value("${forex.api}")
+    private String FOREXAPI;
 
     public static class ForexRequest {
         private String email;
@@ -83,7 +90,7 @@ public class ForexService {
 
     public double getRates(String fromCurrency, String toCurrency) {
         try {
-            String urlString = String.format("https://v6.exchangerate-api.com/v6/19d7498bf9720e16f6308633/pair/%s/%s/1.00", fromCurrency, toCurrency);
+            String urlString = String.format("https://v6.exchangerate-api.com/v6/%s/pair/%s/%s/1.00",FOREXAPI, fromCurrency, toCurrency);
             URL url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
