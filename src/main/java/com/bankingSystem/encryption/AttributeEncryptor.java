@@ -4,11 +4,19 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-import java.util.Base64;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
+import java.util.Base64;
+import java.util.Properties;
+
+@Component
 @Converter
 public class AttributeEncryptor implements AttributeConverter<String, String> {
-    private static final String KEY = "1234567890abcdef";
+
+    @Value("${KEY}")
+    private String KEY;
 
     @Override
     public String convertToDatabaseColumn(String attribute) {
