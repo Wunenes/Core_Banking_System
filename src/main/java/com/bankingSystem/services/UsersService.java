@@ -41,12 +41,11 @@ public class UsersService extends Users {
         return usersRepository.findByUserId(userId);
     }
 
-    public static String getByUserAccountNumber(String accountNumber) {
+    public static String getNameByUserAccountNumber(String accountNumber) {
         Optional<Account> account = accountRepository.findByAccountNumber(accountNumber);
         if (account.isPresent()) {
             Optional<Users> user = usersRepository.findByUserId(account.get().getUserId());
             if (user.isPresent()) {
-                System.out.println(user.get().getUserName());
                 return user.get().getUserName(); // Return the user's name
             }
         }
@@ -55,14 +54,19 @@ public class UsersService extends Users {
 
     public String createUser(Users user){
         try{
-            usersRepository.save(user);
-            Account account = new Account();
-            account.setAccountType("Checking");
-            account.setCurrencyType("USD");
-            account.setBalance(BigDecimal.valueOf(0.00));
-            account.setStatus("Inactive");
-            account.setUserId(user.getUserId());
-            return accountService.createAccount(account);
+            Optional<Users> userCheck = usersRepository.findByEmail(user.getEmail());
+            if(userCheck.isEmpty()) {
+                usersRepository.save(user);
+                Account account = new Account();
+                account.setAccountType("Checking");
+                account.setCurrencyType("USD");
+                account.setBalance(BigDecimal.valueOf(0.00));
+                account.setStatus("Inactive");
+                account.setUserId(user.getUserId());
+                return accountService.createAccount(account);
+            } else{
+                return "User already exists";
+            }
         } catch (Error e){
             return e.getLocalizedMessage();
         }
@@ -70,58 +74,67 @@ public class UsersService extends Users {
 
     public ResponseEntity<List<AccountService.AccountResponseDTO>> getUserAccountsDetails(String email){
         Optional<Users> user = usersRepository.findByEmail(email);
-        UUID userId = user.get().getUserId();
-        List<Account> accounts = accountRepository.findByUserId(userId);
-        if (accounts.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+        if (user.isPresent()) {
+            UUID userId = user.get().getUserId();
+            List<Account> accounts = accountRepository.findByUserId(userId);
+            if (accounts.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+            }
+
+            List<AccountService.AccountResponseDTO> responseList = accounts.stream()
+                    .map(this::getAccountResponseDTO)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(responseList);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonList(new AccountService.AccountResponseDTO("", "", BigDecimal.valueOf(0.0), "", "")));
         }
-
-        List<AccountService.AccountResponseDTO> responseList = accounts.stream()
-                .map(this::getAccountResponseDTO)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(responseList);
     }
 
     public ArrayList<List<TransactionService.TransactionResponseDTO>> getTransactions(String email){
         Optional<Users> user = usersRepository.findByEmail(email);
-        UUID userId = user.get().getUserId();
-        List<Account> accounts = accountRepository.findByUserId(userId);
-        ArrayList<List<TransactionService.TransactionResponseDTO>> userTransactions = new ArrayList<>();
+        if (user.isPresent()) {
+            UUID userId = user.get().getUserId();
+            List<Account> accounts = accountRepository.findByUserId(userId);
+            ArrayList<List<TransactionService.TransactionResponseDTO>> userTransactions = new ArrayList<>();
 
-        for(Account account: accounts) {
-            List<Transaction> transactions = transactionRepository.findAllByAccount(account.getAccountNumber());
-            if (transactions.isEmpty()) {
-                return userTransactions;
-            }
+            for (Account account : accounts) {
+                List<Transaction> transactions = transactionRepository.findAllByAccount(account.getAccountNumber());
+                if (transactions.isEmpty()) {
+                    return userTransactions;
+                }
 
-            List<TransactionService.TransactionResponseDTO> responseList = transactions.stream()
-                    .map(this::getTransactionResponseDTO)
-                    .collect(Collectors.toList());
+                List<TransactionService.TransactionResponseDTO> responseList = transactions.stream()
+                        .map(this::getTransactionResponseDTO)
+                        .collect(Collectors.toList());
 
-            ListIterator<TransactionService.TransactionResponseDTO> iterator = responseList.listIterator();
-            while (iterator.hasNext()) {
-                TransactionService.TransactionResponseDTO response = iterator.next();
-                if (response.getDescription().equals("CURRENCY EXCHANGE")){
-                    if(Objects.equals(response.getReceiverName(), account.getAccountNumber())) {
-                        iterator.remove();
-                    } else {
-                        Transaction forexTransaction = transactionRepository.findByTransactionId(response.getTransactionId());
-                        TransactionService.TransactionResponseDTO forexResponse = getForexResponseDTO(forexTransaction);
-                        iterator.set(forexResponse);
+                ListIterator<TransactionService.TransactionResponseDTO> iterator = responseList.listIterator();
+                while (iterator.hasNext()) {
+                    TransactionService.TransactionResponseDTO response = iterator.next();
+                    if (response.getDescription().equals("CURRENCY EXCHANGE")) {
+                        if (Objects.equals(response.getReceiverName(), account.getAccountNumber())) {
+                            iterator.remove();
+                        } else {
+                            Transaction forexTransaction = transactionRepository.findByTransactionId(response.getTransactionId());
+                            TransactionService.TransactionResponseDTO forexResponse = getForexResponseDTO(forexTransaction);
+                            iterator.set(forexResponse);
+                        }
                     }
                 }
+
+
+                if (userTransactions.contains(responseList)) {
+                    continue;
+                }
+
+                userTransactions.add(responseList);
             }
 
-
-            if(userTransactions.contains(responseList)){
-                continue;
-            }
-
-            userTransactions.add(responseList);
+            return userTransactions;
+        } else{
+            return new ArrayList<>();
         }
-
-        return userTransactions;
     }
     private AccountService.AccountResponseDTO getAccountResponseDTO(Account userAccount) {
         AccountService.AccountResponseDTO response = new AccountService.AccountResponseDTO(userAccount.getAccountType(),

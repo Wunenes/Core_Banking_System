@@ -1,6 +1,7 @@
 package com.bankingSystem.models;
 
 import com.bankingSystem.encryption.AttributeEncryptor;
+import com.bankingSystem.services.UsersService;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

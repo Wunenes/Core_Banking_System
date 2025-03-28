@@ -7,8 +7,8 @@ import com.bankingSystem.repositories.AccountRepository;
 import com.bankingSystem.repositories.TransactionRepository;
 import com.bankingSystem.repositories.UsersRepository;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -19,18 +19,20 @@ import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static com.bankingSystem.generators.TransactionIdGenerator.transactionIdGenerator;
 
-
-@Component
 @Service
 public class ForexService {
+    @Autowired
     UsersRepository usersRepository;
+    @Autowired
     UsersService usersService;
+    @Autowired
     AccountService accountService;
+    @Autowired
     AccountRepository accountRepository;
+    @Autowired
     TransactionRepository transactionRepository;
 
     @Value("${forex.api}")
@@ -79,15 +81,6 @@ public class ForexService {
         }
     }
 
-
-    public ForexService(UsersService usersService, UsersRepository usersRepository, AccountService accountService, AccountRepository accountRepository, TransactionRepository transactionRepository){
-        this.accountService = accountService;
-        this.usersRepository = usersRepository;
-        this.usersService = usersService;
-        this.accountRepository = accountRepository;
-        this.transactionRepository = transactionRepository;
-    }
-
     public double getRates(String fromCurrency, String toCurrency) {
         try {
             String urlString = String.format("https://v6.exchangerate-api.com/v6/%s/pair/%s/%s/1.00",FOREXAPI, fromCurrency, toCurrency);
@@ -126,49 +119,50 @@ public class ForexService {
         double exchangedAmount = amount * getRates(fromCurrency, toCurrency);
 
         Optional<Users> user = usersRepository.findByEmail(forexResponse.getEmail());
-        List<Account> accounts = accountRepository.findByUserId(user.get().getUserId());
-        boolean hasToCurrencyAccount = false;
-        boolean sufficientFunds = false;
+        if (user.isPresent()) {
+            List<Account> accounts = accountRepository.findByUserId(user.get().getUserId());
+            boolean hasToCurrencyAccount = false;
+            boolean sufficientFunds = false;
 
-        Account fromAccount= new Account();
-        Account toAccount = new Account();
+            Account fromAccount = new Account();
+            Account toAccount = new Account();
 
-        for (Account account : accounts) {
-            if (account.getCurrencyType().equals(fromCurrency) && account.getBalance().compareTo(BigDecimal.valueOf(amount)) > 0) {
-                account.setBalance(account.getBalance().subtract(BigDecimal.valueOf(amount)));
-                sufficientFunds = true;
-                accountRepository.save(account);
-                fromAccount = account;
+            for (Account account : accounts) {
+                if (account.getCurrencyType().equals(fromCurrency) && account.getBalance().compareTo(BigDecimal.valueOf(amount)) > 0) {
+                    account.setBalance(account.getBalance().subtract(BigDecimal.valueOf(amount)));
+                    sufficientFunds = true;
+                    accountRepository.save(account);
+                    fromAccount = account;
+                }
             }
 
-        }
-
-        for (Account account : accounts) {
-            if (account.getCurrencyType().equals(toCurrency) && sufficientFunds) {
-                account.setBalance(account.getBalance().add(BigDecimal.valueOf(exchangedAmount)));
-                accountRepository.save(account);
-                hasToCurrencyAccount = true;
-                toAccount = account;
+            for (Account account : accounts) {
+                if (account.getCurrencyType().equals(toCurrency)) {
+                    account.setBalance(account.getBalance().add(BigDecimal.valueOf(exchangedAmount)));
+                    accountRepository.save(account);
+                    hasToCurrencyAccount = true;
+                    toAccount = account;
+                }
             }
 
+            if (!hasToCurrencyAccount && sufficientFunds) {
+                Account newAccount = new Account();
+                newAccount.setStatus("Active");
+                newAccount.setAccountType("Checking");
+                newAccount.setCurrencyType(toCurrency);
+                newAccount.setUserId(user.get().getUserId());
+                newAccount.setBalance(BigDecimal.valueOf(exchangedAmount));
+                accountService.createAccount(newAccount);
+                toAccount = newAccount;
+            }
+
+            Transaction transaction = new Transaction(fromAccount, toAccount, BigDecimal.valueOf(amount),
+                    transactionIdGenerator(fromAccount.getAccountNumber(), toAccount.getAccountNumber(), "RFX", amount), sufficientFunds ? "SUCCESSFUL" : "FAILED", fromCurrency, "CURRENCY EXCHANGE", fromCurrency, toCurrency);
+            transactionRepository.save(transaction);
+
+            return sufficientFunds ? "successful" : "insufficient balance";
+        } else{
+            return "User doesn't exist";
         }
-
-        if (!hasToCurrencyAccount && sufficientFunds) {
-            Account newAccount = new Account();
-            newAccount.setStatus("Active");
-            newAccount.setAccountType("Checking");
-            newAccount.setCurrencyType(toCurrency);
-            newAccount.setUserId(user.get().getUserId());
-            newAccount.setBalance(BigDecimal.valueOf(exchangedAmount));
-            accountService.createAccount(newAccount);
-            toAccount = newAccount;
-        }
-
-        Transaction transaction = new Transaction(fromAccount, toAccount, BigDecimal.valueOf(amount),
-                transactionIdGenerator(fromAccount.getAccountNumber(), toAccount.getAccountNumber(), "RFX", amount), sufficientFunds ? "SUCCESSFUL" : "FAILED", fromCurrency, "CURRENCY EXCHANGE", fromCurrency, toCurrency);
-        transactionRepository.save(transaction);
-
-        return sufficientFunds ? "successful" : "insufficient balance";
     }
 }
-

@@ -1,9 +1,11 @@
 com\bankingSystem\repositories\UsersRepository.class
 com\bankingSystem\controllers\TransactionController.class
+com\bankingSystem\services\AccountService$AccountResponseDTO.class
+com\bankingSystem\services\TransactionService$TransactionResponseDTO.class
+com\bankingSystem\services\ForexService$ForexRequest.class
 com\bankingSystem\controllers\AccountController.class
 com\bankingSystem\controllers\UsersController.class
 com\bankingSystem\encryption\AttributeEncryptor.class
-com\bankingSystem\controllers\TransactionController$TransactionResponseDTO.class
 com\bankingSystem\generators\TransactionIdGenerator.class
 com\bankingSystem\repositories\AccountRepository.class
 com\bankingSystem\services\ForexService.class
@@ -16,5 +18,4 @@ com\bankingSystem\services\AccountService.class
 com\bankingSystem\BankingSystemApplication.class
 com\bankingSystem\repositories\TransactionRepository.class
 com\bankingSystem\models\Transaction.class
-com\bankingSystem\controllers\AccountController$AccountResponseDTO.class
 com\bankingSystem\services\TransactionService.class

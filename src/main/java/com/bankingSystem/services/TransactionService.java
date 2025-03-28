@@ -71,7 +71,7 @@ public class TransactionService {
             Transaction transaction = new Transaction(sender, receiver, BigDecimal.valueOf(amount.doubleValue()),
                     transactionIdGenerator(senderAccount, receiverAccount, "RFT", amount.doubleValue()), "FAILED", sender.getCurrencyType(), "FAILED TRANSACTION");
             transactionRepository.save(transaction);
-            throw new RuntimeException("Insufficient balance");
+            return "Insufficient balance";
         }
 
         sender.setBalance(BigDecimal.valueOf(senderBalance - amount.doubleValue()));
@@ -86,13 +86,19 @@ public class TransactionService {
         }
         UUID receiverUserId = receiver.getUserId();
         Optional<Users> recipientUser = usersRepository.findByUserId(receiverUserId);
-        String recipientName = recipientUser.get().getUserName();
+        if (recipientUser.isPresent()) {
+            String recipientName = recipientUser.get().getUserName();
 
-        Transaction transaction = new Transaction(sender, receiver, amount,
-                transactionIdGenerator(senderAccount, receiverAccount, "RNI", amount.doubleValue()), "SUCCESSFUL", sender.getCurrencyType(), recipientName);
-        transactionRepository.save(transaction);
-        return transaction.getTransactionId();
+            Transaction transaction = new Transaction(sender, receiver, amount,
+                    transactionIdGenerator(senderAccount, receiverAccount, "RNI", amount.doubleValue()), "SUCCESSFUL", sender.getCurrencyType(), "Internal Transfer");
+            transactionRepository.save(transaction);
+            return transaction.getTransactionId();
+        } else {
+            return "Recipient does not exist";
+        }
     }
+
+
 
     public static class TransactionResponseDTO {
         private String senderName;
@@ -132,10 +138,11 @@ public class TransactionService {
         }
 
         public String getSenderName() { return senderName; }
-        public void setSenderName(String sender) { this.senderName =  UsersService.getByUserAccountNumber(sender); }
+        public void setSenderName(String sender) { this.senderName =  sender; }
 
         public String getReceiverName() { return receiverName; }
-        public void setReceiverName(String receiver) { this.receiverName = UsersService.getByUserAccountNumber(receiver); }
+
+        public void setReceiverName(String receiver) { this.receiverName = receiver; }
 
         public BigDecimal getAmount() { return amount; }
         public void setAmount(BigDecimal amount) { this.amount = amount; }
@@ -233,9 +240,9 @@ public class TransactionService {
         String senderAccountNumber = transaction.getSender();
         String receiverAccountNumber = transaction.getReceiver();
 
-        // Fetch user names from account numbers
-        String senderName = UsersService.getByUserAccountNumber(senderAccountNumber);
-        String receiverName = UsersService.getByUserAccountNumber(receiverAccountNumber);
+        // Fetch usernames from account numbers
+        String senderName = UsersService.getNameByUserAccountNumber(senderAccountNumber);
+        String receiverName = UsersService.getNameByUserAccountNumber(receiverAccountNumber);
 
         return new TransactionResponseDTO(
                 senderName,

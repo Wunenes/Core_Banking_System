@@ -27,7 +27,6 @@ public class TransactionController {
     }
     @PostMapping("/deposit")
     public ResponseEntity<Transaction> deposit(@RequestBody TransactionService.TransactionResponseDTO depositBody) throws NoSuchAlgorithmException {
-        System.out.println("Received deposit request: " + depositBody.getReceiverName() + ", " + depositBody.getAmount());
         return ResponseEntity.ok(transactionService.deposit(depositBody));
     }
     @PostMapping("/internal_transfer")
