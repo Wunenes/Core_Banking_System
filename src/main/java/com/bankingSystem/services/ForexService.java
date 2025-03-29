@@ -1,5 +1,7 @@
 package com.bankingSystem.services;
 
+import com.bankingSystem.exceptions.InsufficientFundsException;
+import com.bankingSystem.exceptions.UserNotFoundException;
 import com.bankingSystem.models.Account;
 import com.bankingSystem.models.Users;
 import com.bankingSystem.models.Transaction;
@@ -10,39 +12,54 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.lang.IllegalArgumentException;
 import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.math.RoundingMode;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.Optional;
 
 import static com.bankingSystem.generators.TransactionIdGenerator.transactionIdGenerator;
 
 @Service
+@Transactional
 public class ForexService {
+
     @Autowired
     UsersRepository usersRepository;
-    @Autowired
-    UsersService usersService;
-    @Autowired
-    AccountService accountService;
+
     @Autowired
     AccountRepository accountRepository;
+
     @Autowired
     TransactionRepository transactionRepository;
 
+    @Autowired
+    AccountService accountService;
+
     @Value("${forex.api}")
-    private String FOREXAPI;
+    private String forexApiKey;
 
     public static class ForexRequest {
         private String email;
         private String fromCurrency;
         private String toCurrency;
         private double amount;
+        private double exchangeRate;
+
+        ForexRequest(String email, String fromCurrency, String toCurrency, double amount, double exchangeRate) {
+            this.email = email;
+            this.fromCurrency = fromCurrency;
+            this.toCurrency = toCurrency;
+            this.amount = amount;
+            this.exchangeRate = exchangeRate;
+        }
 
         // Getter and Setter for email
         public String getEmail() {
@@ -76,6 +93,15 @@ public class ForexService {
             return amount;
         }
 
+        // Getter and Setter for exchangeRate
+        public double getExchangeRate() {
+            return exchangeRate;
+        }
+
+        public void setExchangeRate(double exchangeRate) {
+            this.exchangeRate = exchangeRate;
+        }
+
         public void setAmount(double amount) {
             this.amount = amount;
         }
@@ -83,86 +109,119 @@ public class ForexService {
 
     public double getRates(String fromCurrency, String toCurrency) {
         try {
-            String urlString = String.format("https://v6.exchangerate-api.com/v6/%s/pair/%s/%s/1.00",FOREXAPI, fromCurrency, toCurrency);
-            URL url = new URL(urlString);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
+            String urlString = String.format("https://v6.exchangerate-api.com/v6/%s/pair/%s/%s/1.00",
+                    forexApiKey, fromCurrency, toCurrency);
 
-            InputStreamReader reader = new InputStreamReader(connection.getInputStream());
-            StringBuilder response = new StringBuilder();
-            int c;
-            while ((c = reader.read()) != -1) {
-                response.append((char) c);
-            }
-            reader.close();
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(urlString))
+                    .GET()
+                    .build();
 
-            JSONObject jsonResponse = new JSONObject(response.toString());
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            JSONObject jsonResponse = new JSONObject(response.body());
 
             if (jsonResponse.getString("result").equals("success")) {
                 return jsonResponse.getDouble("conversion_rate");
             } else {
-                throw new IOException("Failed to retrieve conversion rates");
+                throw new IOException("Failed to retrieve conversion rates: " + jsonResponse);
             }
-
         } catch (Exception e) {
-            System.err.println("Error fetching exchange rate: " + e.getMessage());
             throw new RuntimeException("Currency exchange rate retrieval failed", e);
         }
     }
 
-    public String exchange(ForexRequest forexResponse) throws NoSuchAlgorithmException {
-        double amount = forexResponse.getAmount();
-        String fromCurrency = forexResponse.getFromCurrency();
-        String toCurrency = forexResponse.getToCurrency();
+    public Account createNewAccount(Users user, String toCurrency) {
+        return accountService.createAccount(UsersService.accountBuilder(user, toCurrency, "Active"));
+    }
 
+    @Transactional
+    public ForexRequest exchange(ForexRequest request) throws InsufficientFundsException, NoSuchAlgorithmException, UserNotFoundException {
+        Transaction transaction = null;
+        try {
+            validateRequest(request);
 
-        double exchangedAmount = amount * getRates(fromCurrency, toCurrency);
+            Users user = usersRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new UserNotFoundException("User not found", request.getEmail()));
 
-        Optional<Users> user = usersRepository.findByEmail(forexResponse.getEmail());
-        if (user.isPresent()) {
-            List<Account> accounts = accountRepository.findByUserId(user.get().getUserId());
-            boolean hasToCurrencyAccount = false;
-            boolean sufficientFunds = false;
+            BigDecimal amount = BigDecimal.valueOf(request.getAmount())
+                    .setScale(2, RoundingMode.HALF_UP);
 
-            Account fromAccount = new Account();
-            Account toAccount = new Account();
+            double rate = getRates(
+                    request.getFromCurrency(),
+                    request.getToCurrency()
+            );
 
-            for (Account account : accounts) {
-                if (account.getCurrencyType().equals(fromCurrency) && account.getBalance().compareTo(BigDecimal.valueOf(amount)) > 0) {
-                    account.setBalance(account.getBalance().subtract(BigDecimal.valueOf(amount)));
-                    sufficientFunds = true;
-                    accountRepository.save(account);
-                    fromAccount = account;
-                }
+            request.setExchangeRate(rate);
+
+            BigDecimal exchangedAmount = amount.multiply(BigDecimal.valueOf(rate));
+            BigDecimal fee = BigDecimal.valueOf(0.00);
+            BigDecimal finalAmount = exchangedAmount.subtract(fee);
+
+            Account fromAccount = accountRepository.findByUserIdAndCurrencyType(
+                    user.getUserId(),
+                    request.getFromCurrency()
+            ).orElseThrow();
+
+            // Lock the account for concurrent access
+            List<Account> accounts = accountRepository.findByUserId(fromAccount.getUserId());
+            Account lockedFromAccount = accounts.stream()
+                    .filter(account -> account.getCurrencyType().equals(request.getFromCurrency())) // Example filter condition
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("No account found for specified criteria"));
+
+            if (lockedFromAccount.getBalance().compareTo(amount) < 0) {
+                throw new InsufficientFundsException(
+                        "Insufficient funds in " + request.getFromCurrency() + " account"
+                );
             }
 
-            for (Account account : accounts) {
-                if (account.getCurrencyType().equals(toCurrency)) {
-                    account.setBalance(account.getBalance().add(BigDecimal.valueOf(exchangedAmount)));
-                    accountRepository.save(account);
-                    hasToCurrencyAccount = true;
-                    toAccount = account;
-                }
-            }
+            Account toAccount = accountRepository.findByUserIdAndCurrencyType(
+                    user.getUserId(),
+                    request.getToCurrency()
+            ).orElseGet(() -> createNewAccount(user, request.toCurrency));
 
-            if (!hasToCurrencyAccount && sufficientFunds) {
-                Account newAccount = new Account();
-                newAccount.setStatus("Active");
-                newAccount.setAccountType("Checking");
-                newAccount.setCurrencyType(toCurrency);
-                newAccount.setUserId(user.get().getUserId());
-                newAccount.setBalance(BigDecimal.valueOf(exchangedAmount));
-                accountService.createAccount(newAccount);
-                toAccount = newAccount;
-            }
+            // Perform the exchange
+            lockedFromAccount.debit(amount);
+            toAccount.credit(finalAmount);
 
-            Transaction transaction = new Transaction(fromAccount, toAccount, BigDecimal.valueOf(amount),
-                    transactionIdGenerator(fromAccount.getAccountNumber(), toAccount.getAccountNumber(), "RFX", amount), sufficientFunds ? "SUCCESSFUL" : "FAILED", fromCurrency, "CURRENCY EXCHANGE", fromCurrency, toCurrency);
+            // Save accounts
+            accountRepository.save(lockedFromAccount);
+            accountRepository.save(toAccount);
+
+            // Create and save transaction record
+            transaction = new Transaction(lockedFromAccount, toAccount, amount, transactionIdGenerator(lockedFromAccount.getAccountNumber(), toAccount.getAccountNumber(), "RFX", amount.doubleValue()),
+                    "SUCCESSFUL",
+                    request.getToCurrency(),
+                    "CURRENCY EXCHANGE",
+                    request.getFromCurrency(),
+                    request.getToCurrency()
+            );
+
             transactionRepository.save(transaction);
 
-            return sufficientFunds ? "successful" : "insufficient balance";
-        } else{
-            return "User doesn't exist";
+            return new ForexRequest(
+                    request.getEmail(),
+                    request.getFromCurrency(),
+                    request.getToCurrency(),
+                    request.getAmount(),
+                    request.getExchangeRate()
+            );
+        } catch (Exception e) {
+            // Log failed transaction if we created one
+            if (transaction != null) {
+                transaction.setStatus("FAILED");
+                transactionRepository.save(transaction);
+            }
+            throw e;
         }
     }
+    private void validateRequest (ForexRequest request){
+        if (request.getAmount() <= 0) {
+            throw new IllegalArgumentException("Exchange amount cannot be negative");
+        }
+        // Add more validations as needed
+    }
 }
+

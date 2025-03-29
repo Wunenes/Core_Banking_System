@@ -17,16 +17,16 @@ import java.util.stream.Collectors;
 
 @Service
 public class UsersService extends Users {
-    private static UsersRepository usersRepository = null;
+    private final UsersRepository usersRepository;
     private final AccountService accountService;
-    static AccountRepository accountRepository = null;
+    private final AccountRepository accountRepository;
     final TransactionRepository transactionRepository;
 
     @Autowired
     public UsersService(UsersRepository usersRepository, AccountService accountService, AccountRepository accountRepository, TransactionRepository transactionRepository) {
-        UsersService.usersRepository = usersRepository;
+        this.usersRepository = usersRepository;
         this.accountService = accountService;
-        UsersService.accountRepository = accountRepository;
+        this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
     }
 
@@ -41,7 +41,7 @@ public class UsersService extends Users {
         return usersRepository.findByUserId(userId);
     }
 
-    public static String getNameByUserAccountNumber(String accountNumber) {
+    public String getNameByUserAccountNumber(String accountNumber) {
         Optional<Account> account = accountRepository.findByAccountNumber(accountNumber);
         if (account.isPresent()) {
             Optional<Users> user = usersRepository.findByUserId(account.get().getUserId());
@@ -52,18 +52,23 @@ public class UsersService extends Users {
         return accountNumber; // Fallback to account number if user not found
     }
 
+    public static Account accountBuilder(Users user, String currency, String status){
+        Account account = new Account();
+        account.setAccountType("Checking");
+        account.setCurrencyType(currency);
+        account.setBalance(BigDecimal.valueOf(0.00));
+        account.setStatus(status);
+        account.setUserId(user.getUserId());
+        return account;
+    }
+
     public String createUser(Users user){
         try{
             Optional<Users> userCheck = usersRepository.findByEmail(user.getEmail());
             if(userCheck.isEmpty()) {
                 usersRepository.save(user);
-                Account account = new Account();
-                account.setAccountType("Checking");
-                account.setCurrencyType("USD");
-                account.setBalance(BigDecimal.valueOf(0.00));
-                account.setStatus("Inactive");
-                account.setUserId(user.getUserId());
-                return accountService.createAccount(account);
+                Account account = accountBuilder(user, "KES", "Inactive");
+                return accountService.createAccount(account).getAccountNumber();
             } else{
                 return "User already exists";
             }
@@ -113,7 +118,7 @@ public class UsersService extends Users {
                 while (iterator.hasNext()) {
                     TransactionService.TransactionResponseDTO response = iterator.next();
                     if (response.getDescription().equals("CURRENCY EXCHANGE")) {
-                        if (Objects.equals(response.getReceiverName(), account.getAccountNumber())) {
+                        if (Objects.equals(response.getReceiverAccNumber(), account.getAccountNumber())) {
                             iterator.remove();
                         } else {
                             Transaction forexTransaction = transactionRepository.findByTransactionId(response.getTransactionId());
@@ -150,8 +155,8 @@ public class UsersService extends Users {
     private TransactionService.TransactionResponseDTO getTransactionResponseDTO(Transaction transaction) {
         TransactionService.TransactionResponseDTO response = new TransactionService.TransactionResponseDTO(transaction.getSender(),
                 transaction.getReceiver(), transaction.getTransactionId(), transaction.getAmount(), transaction.getTimestamp().toString(), transaction.getDescription(), transaction.getCurrency());
-        response.setSenderName(transaction.getSender());
-        response.setReceiverName(transaction.getReceiver());
+        response.setSenderAccNumber(transaction.getSender());
+        response.setReceiverAccNumber(transaction.getReceiver());
         response.setAmount(transaction.getAmount());
         response.setTransactionId(transaction.getTransactionId());
         response.setTimestamp(transaction.getTimestamp());
@@ -163,8 +168,8 @@ public class UsersService extends Users {
     private TransactionService.TransactionResponseDTO getForexResponseDTO(Transaction transaction) {
         TransactionService.TransactionResponseDTO response = new TransactionService.TransactionResponseDTO(transaction.getSender(),
                 transaction.getReceiver(), transaction.getTransactionId(), transaction.getAmount(), transaction.getTimestamp().toString(), transaction.getDescription(), transaction.getCurrency(), transaction.getToCurrency(), transaction.getFromCurrency());
-        response.setSenderName(transaction.getSender());
-        response.setReceiverName(transaction.getReceiver());
+        response.setSenderAccNumber(transaction.getSender());
+        response.setReceiverAccNumber(transaction.getReceiver());
         response.setAmount(transaction.getAmount());
         response.setTransactionId(transaction.getTransactionId());
         response.setTimestamp(transaction.getTimestamp());

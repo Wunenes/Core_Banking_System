@@ -7,8 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@EntityScan(basePackages = "com.bankingSystem.models")
-@EnableJpaRepositories(basePackages = "com.bankingSystem.repositories")
+@ComponentScan(basePackages = "com.bankingSystem")
 public class BankingSystemApplication {
     public static void main(String[] args) {
         SpringApplication.run(BankingSystemApplication.class, args);

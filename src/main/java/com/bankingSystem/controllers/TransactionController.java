@@ -1,9 +1,9 @@
 package com.bankingSystem.controllers;
 
-import com.bankingSystem.services.ForexService;
-import com.bankingSystem.repositories.TransactionRepository;
-import com.bankingSystem.models.Transaction;
+import com.bankingSystem.services.ForexService;import com.bankingSystem.models.Transaction;
+import com.bankingSystem.exceptions.InsufficientFundsException;
 import com.bankingSystem.services.TransactionService;
+import com.bankingSystem.exceptions.UserNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +17,9 @@ import java.util.List;
 public class TransactionController {
     @Autowired
     com.bankingSystem.services.TransactionService transactionService;
-    TransactionRepository transactionRepository;
     ForexService forexService;
 
-    public TransactionController(TransactionRepository transactionRepository, com.bankingSystem.services.TransactionService transactionService, ForexService forexService){
-        this.transactionRepository = transactionRepository;
+    public TransactionController(com.bankingSystem.services.TransactionService transactionService, ForexService forexService){
         this.transactionService = transactionService;
         this.forexService = forexService;
     }
@@ -30,13 +28,13 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.deposit(depositBody));
     }
     @PostMapping("/internal_transfer")
-    public String transfer(@RequestBody TransactionService.TransactionResponseDTO transactionBody) throws NoSuchAlgorithmException {
+    public String transfer(@RequestBody TransactionService.TransactionResponseDTO transactionBody) throws NoSuchAlgorithmException, UserNotFoundException, InsufficientFundsException {
         return transactionService.internalTransfer(transactionBody);
     }
 
     @PostMapping("/forex")
-    public String forex(
-            @RequestBody ForexService.ForexRequest forexBody) throws NoSuchAlgorithmException {
+    public ForexService.ForexRequest forex(
+            @RequestBody ForexService.ForexRequest forexBody) throws NoSuchAlgorithmException, UserNotFoundException, InsufficientFundsException {
         return forexService.exchange(forexBody);
     }
 

@@ -15,6 +15,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import com.bankingSystem.generators.AccountNumberGenerator;
+
 @Service
 public class AccountService extends Account {
     @Autowired
@@ -26,14 +28,10 @@ public class AccountService extends Account {
     public Optional<Account> getByAccountNumber(String accountNumber) {
         return accountRepository.findByAccountNumber(accountNumber);
     }
-    public String createAccount(Account account) {
-        try {
-            account.setAccountNumber(accountNumberGenerator(account.getAccountType(), account.getCurrencyType()));
-            accountRepository.save(account);
-            return account.getAccountNumber();
-        } catch (Error e) {
-            return e.getLocalizedMessage();
-        }
+    public Account createAccount(Account account) {
+        account.setAccountNumber(accountNumberGenerator(account.getAccountType(), account.getCurrencyType()));
+        accountRepository.save(account);
+        return account;
     }
     @Transactional
     public String deleteAccount(String accountNumber) {

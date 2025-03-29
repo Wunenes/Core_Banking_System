@@ -1,5 +1,7 @@
 com\bankingSystem\repositories\UsersRepository.class
+com\bankingSystem\exceptions\InsufficientFundsException.class
 com\bankingSystem\controllers\TransactionController.class
+com\bankingSystem\exceptions\UserNotFoundException.class
 com\bankingSystem\services\AccountService$AccountResponseDTO.class
 com\bankingSystem\services\TransactionService$TransactionResponseDTO.class
 com\bankingSystem\services\ForexService$ForexRequest.class

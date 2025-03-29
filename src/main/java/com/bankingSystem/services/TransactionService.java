@@ -6,10 +6,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.bankingSystem.exceptions.InsufficientFundsException;
+import com.bankingSystem.exceptions.UserNotFoundException;
 import com.bankingSystem.models.Account;
 import com.bankingSystem.models.Transaction;
-import com.bankingSystem.models.Users;
-import com.bankingSystem.repositories.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,65 +18,70 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import com.bankingSystem.repositories.AccountRepository;
 import com.bankingSystem.repositories.TransactionRepository;
-
-
 import static com.bankingSystem.generators.TransactionIdGenerator.transactionIdGenerator;
-
 
 @Service
 public class TransactionService {
     @Autowired
     AccountRepository accountRepository;
+
     @Autowired
     TransactionRepository transactionRepository;
+
     @Autowired
-    UsersRepository usersRepository;
+    ForexService forexService;
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Transaction deposit(TransactionResponseDTO depositResponse) throws NoSuchAlgorithmException {
-        String receiverAccount = depositResponse.getReceiverName();
+        String receiverAccount = depositResponse.getReceiverAccNumber();
         double amount = depositResponse.getAmount().doubleValue();
 
         Account account = accountRepository.findByAccountNumber(receiverAccount)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
 
-        account.setBalance(BigDecimal.valueOf(account.getBalance().doubleValue() + amount));
+        account.credit(BigDecimal.valueOf(amount));
         accountRepository.save(account);
 
         Transaction transaction = new Transaction("DEPOSIT", account, BigDecimal.valueOf(amount),
                 transactionIdGenerator("DEPOSIT", receiverAccount, "RKE", amount), "SUCCESSFUL", account.getCurrencyType(), "CASH DEPOSIT");
 
-        if (Objects.equals(account.getStatus(), "Inactive")){
+        if (Objects.equals(account.getStatus(), "Inactive") && amount > 200.00){
             account.setStatus("Active");
         }
         return transactionRepository.save(transaction);
     }
     @Transactional
-    public String internalTransfer(TransactionResponseDTO transactionResponse) throws NoSuchAlgorithmException {
-        String senderAccount = transactionResponse.getSenderName();
-        String receiverAccount = transactionResponse.getReceiverName();
+    public String internalTransfer(TransactionResponseDTO transactionResponse) throws NoSuchAlgorithmException, UserNotFoundException, InsufficientFundsException {
+        String senderAccount = transactionResponse.getSenderAccNumber();
+        String receiverAccount = transactionResponse.getReceiverAccNumber();
         BigDecimal amount = transactionResponse.getAmount();
 
         Account sender = accountRepository.findByAccountNumber(senderAccount)
-                .orElseThrow(() -> new RuntimeException("Sender not found"));
+                .orElseThrow(() ->  new UserNotFoundException("User not found", senderAccount));
 
         Account receiver = accountRepository.findByAccountNumber(receiverAccount)
-                .orElseThrow(() -> new RuntimeException("Receiver not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found", receiverAccount));
 
-        double senderBalance = sender.getBalance().doubleValue();
-        double receiverBalance = receiver.getBalance().doubleValue();
+        BigDecimal senderBalance = sender.getBalance();
 
-        if (senderBalance < amount.doubleValue()) {
-            Transaction transaction = new Transaction(sender, receiver, BigDecimal.valueOf(amount.doubleValue()),
-                    transactionIdGenerator(senderAccount, receiverAccount, "RFT", amount.doubleValue()), "FAILED", sender.getCurrencyType(), "FAILED TRANSACTION");
+        if (senderBalance.compareTo(amount) < 0) {
+            Transaction transaction = new Transaction(sender, receiver, amount,
+                    transactionIdGenerator(senderAccount, receiverAccount, "RFT", amount.doubleValue()), "FAILED", sender.getCurrencyType(), "INSUFFICIENT BALANCE");
             transactionRepository.save(transaction);
-            return "Insufficient balance";
+            throw new InsufficientFundsException(
+                    "Insufficient funds in " + senderAccount
+            );
         }
-
-        sender.setBalance(BigDecimal.valueOf(senderBalance - amount.doubleValue()));
-        receiver.setBalance(BigDecimal.valueOf(receiverBalance + amount.doubleValue()));
-
+        if (Objects.equals(sender.getCurrencyType(), receiver.getCurrencyType())) {
+            sender.debit(amount);
+            receiver.credit(amount);
+        } else {
+            double exchangeRate = forexService.getRates(sender.getCurrencyType(), receiver.getCurrencyType());
+            sender.debit(amount);
+            BigDecimal exchangedAmount = amount.multiply(BigDecimal.valueOf(exchangeRate));
+            receiver.credit(exchangedAmount);
+        }
 
         accountRepository.save(sender);
         accountRepository.save(receiver);
@@ -84,25 +89,16 @@ public class TransactionService {
         if (Objects.equals(receiver.getStatus(), "Inactive")){
             receiver.setStatus("Active");
         }
-        UUID receiverUserId = receiver.getUserId();
-        Optional<Users> recipientUser = usersRepository.findByUserId(receiverUserId);
-        if (recipientUser.isPresent()) {
-            String recipientName = recipientUser.get().getUserName();
 
-            Transaction transaction = new Transaction(sender, receiver, amount,
-                    transactionIdGenerator(senderAccount, receiverAccount, "RNI", amount.doubleValue()), "SUCCESSFUL", sender.getCurrencyType(), "Internal Transfer");
-            transactionRepository.save(transaction);
-            return transaction.getTransactionId();
-        } else {
-            return "Recipient does not exist";
-        }
+        Transaction transaction = new Transaction(sender, receiver, amount,
+                transactionIdGenerator(senderAccount, receiverAccount, "RNI", amount.doubleValue()), "SUCCESSFUL", sender.getCurrencyType(), "INTERNAL TRANSFER");
+        transactionRepository.save(transaction);
+        return transaction.getTransactionId();
     }
 
-
-
     public static class TransactionResponseDTO {
-        private String senderName;
-        private String receiverName;
+        private String senderAccNumber;
+        private String receiverAccNumber;
         private String timestamp;
         private BigDecimal amount;
         private String description;
@@ -114,8 +110,8 @@ public class TransactionService {
         public TransactionResponseDTO() {}
 
         public TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency) {
-            this.senderName = sender;
-            this.receiverName = receiver;
+            this.senderAccNumber = sender;
+            this.receiverAccNumber = receiver;
             this.amount = amount;
             this.timestamp = timeStamp;
             this.transactionId = transactionId;
@@ -126,8 +122,8 @@ public class TransactionService {
         }
 
         public TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency, String toCurrency, String fromCurrency) {
-            this.senderName = sender;
-            this.receiverName = receiver;
+            this.senderAccNumber = sender;
+            this.receiverAccNumber = receiver;
             this.amount = amount;
             this.timestamp = timeStamp;
             this.transactionId = transactionId;
@@ -137,12 +133,12 @@ public class TransactionService {
             this.fromCurrency = fromCurrency;
         }
 
-        public String getSenderName() { return senderName; }
-        public void setSenderName(String sender) { this.senderName =  sender; }
+        public String getSenderAccNumber() { return senderAccNumber; }
+        public void setSenderAccNumber(String sender) { this.senderAccNumber =  sender; }
 
-        public String getReceiverName() { return receiverName; }
+        public String getReceiverAccNumber() { return receiverAccNumber; }
 
-        public void setReceiverName(String receiver) { this.receiverName = receiver; }
+        public void setReceiverAccNumber(String receiver) { this.receiverAccNumber = receiver; }
 
         public BigDecimal getAmount() { return amount; }
         public void setAmount(BigDecimal amount) { this.amount = amount; }
@@ -171,8 +167,8 @@ public class TransactionService {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             TransactionResponseDTO that = (TransactionResponseDTO) o;
-            return Objects.equals(senderName, that.senderName) &&
-                    Objects.equals(receiverName, that.receiverName) &&
+            return Objects.equals(senderAccNumber, that.senderAccNumber) &&
+                    Objects.equals(receiverAccNumber, that.receiverAccNumber) &&
                     Objects.equals(timestamp, that.timestamp) &&
                     Objects.equals(amount, that.amount) &&
                     Objects.equals(transactionId, that.transactionId);
@@ -180,7 +176,7 @@ public class TransactionService {
 
         @Override
         public int hashCode() {
-            return Objects.hash(senderName, receiverName, timestamp, amount, transactionId);
+            return Objects.hash(senderAccNumber, receiverAccNumber, timestamp, amount, transactionId);
         }
     }
 
@@ -237,16 +233,10 @@ public class TransactionService {
     }
 
     private TransactionResponseDTO getTransactionResponseDTO(Transaction transaction) {
-        String senderAccountNumber = transaction.getSender();
-        String receiverAccountNumber = transaction.getReceiver();
-
-        // Fetch usernames from account numbers
-        String senderName = UsersService.getNameByUserAccountNumber(senderAccountNumber);
-        String receiverName = UsersService.getNameByUserAccountNumber(receiverAccountNumber);
 
         return new TransactionResponseDTO(
-                senderName,
-                receiverName,
+                "",
+                "",
                 "",
                 transaction.getAmount(),
                 "",

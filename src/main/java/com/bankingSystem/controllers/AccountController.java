@@ -15,7 +15,7 @@ public class AccountController {
     }
     @PostMapping("/create")
     public String createAccount (@RequestBody Account accountDetails) {
-        return accountService.createAccount(accountDetails);
+        return accountService.createAccount(accountDetails).getAccountNumber();
     }
     @DeleteMapping("/delete")
     public String deleteAccount(@RequestParam String accountNumber) {

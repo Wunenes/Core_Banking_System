@@ -99,4 +99,14 @@ public class Account {
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
     }
+
+    public void debit(BigDecimal amount) {
+        BigDecimal newBalance = balance.subtract(amount);
+        setBalance(newBalance);
+    }
+
+    public void credit(BigDecimal finalAmount) {
+        BigDecimal newBalance = balance.add(finalAmount);
+        setBalance(newBalance);
+    }
 }
