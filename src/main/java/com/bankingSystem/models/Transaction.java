@@ -2,10 +2,17 @@ package com.bankingSystem.models;
 
 import com.bankingSystem.encryption.AttributeEncryptor;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
 @Entity
+@NoArgsConstructor
 @Table(name = "transactions")
 public class Transaction {
     @Id
@@ -46,9 +53,6 @@ public class Transaction {
     @Column(name = "from_currency")
     private String fromCurrency;
 
-    public Transaction(){
-    }
-
     public Transaction(String sender, Account receiver, BigDecimal amount, String Transaction_ID, String status, String currency, String description) {
         this.sender = sender;
         this.receiver = receiver.getAccountNumber();
@@ -81,30 +85,5 @@ public class Transaction {
         this.currency = currency;
         this.toCurrency = toCurrency;
         this.fromCurrency = fromCurrency;
-    }
-
-    public String getSender() { return sender; }
-    public String getReceiver() { return receiver; }
-    public BigDecimal getAmount() { return amount; }
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public String getTransactionId() {return transactionId; }
-    public String getStatus(){
-        return status;
-    }
-    public String getCurrency(){
-        return currency;
-    }
-    public String getDescription() {
-        return description;
-    }
-    public String getToCurrency(){
-        return toCurrency;
-    }
-    public String getFromCurrency(){
-        return fromCurrency;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 }

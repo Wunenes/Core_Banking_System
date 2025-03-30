@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.lang.IllegalArgumentException;
@@ -46,6 +48,8 @@ public class ForexService {
     @Value("${forex.api}")
     private String forexApiKey;
 
+    @Setter
+    @Getter
     public static class ForexRequest {
         private String email;
         private String fromCurrency;
@@ -61,50 +65,6 @@ public class ForexService {
             this.exchangeRate = exchangeRate;
         }
 
-        // Getter and Setter for email
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-        // Getter and Setter for fromCurrency
-        public String getFromCurrency() {
-            return fromCurrency;
-        }
-
-        public void setFromCurrency(String fromCurrency) {
-            this.fromCurrency = fromCurrency;
-        }
-
-        // Getter and Setter for toCurrency
-        public String getToCurrency() {
-            return toCurrency;
-        }
-
-        public void setToCurrency(String toCurrency) {
-            this.toCurrency = toCurrency;
-        }
-
-        // Getter and Setter for amount
-        public double getAmount() {
-            return amount;
-        }
-
-        // Getter and Setter for exchangeRate
-        public double getExchangeRate() {
-            return exchangeRate;
-        }
-
-        public void setExchangeRate(double exchangeRate) {
-            this.exchangeRate = exchangeRate;
-        }
-
-        public void setAmount(double amount) {
-            this.amount = amount;
-        }
     }
 
     public double getRates(String fromCurrency, String toCurrency) {

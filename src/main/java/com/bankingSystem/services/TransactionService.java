@@ -2,7 +2,6 @@ package com.bankingSystem.services;
 
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -10,6 +9,9 @@ import com.bankingSystem.exceptions.InsufficientFundsException;
 import com.bankingSystem.exceptions.UserNotFoundException;
 import com.bankingSystem.models.Account;
 import com.bankingSystem.models.Transaction;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -96,6 +98,9 @@ public class TransactionService {
         return transaction.getTransactionId();
     }
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
     public static class TransactionResponseDTO {
         private String senderAccNumber;
         private String receiverAccNumber;
@@ -106,8 +111,6 @@ public class TransactionService {
         private String toCurrency;
         private String fromCurrency;
         private String transactionId;
-
-        public TransactionResponseDTO() {}
 
         public TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency) {
             this.senderAccNumber = sender;
@@ -132,34 +135,6 @@ public class TransactionService {
             this.toCurrency = toCurrency;
             this.fromCurrency = fromCurrency;
         }
-
-        public String getSenderAccNumber() { return senderAccNumber; }
-        public void setSenderAccNumber(String sender) { this.senderAccNumber =  sender; }
-
-        public String getReceiverAccNumber() { return receiverAccNumber; }
-
-        public void setReceiverAccNumber(String receiver) { this.receiverAccNumber = receiver; }
-
-        public BigDecimal getAmount() { return amount; }
-        public void setAmount(BigDecimal amount) { this.amount = amount; }
-
-        public String getTimestamp() { return timestamp; }
-        public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp.toString(); }
-
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
-
-        public String getCurrency() { return currency; }
-        public void setCurrency(String currency) { this.currency = currency; }
-
-        public String getToCurrency() { return toCurrency; }
-        public void setToCurrency(String toCurrency) { this.toCurrency = toCurrency; }
-
-        public String getFromCurrency() { return fromCurrency; }
-        public void setFromCurrency(String fromCurrency) { this.fromCurrency = fromCurrency; }
-
-        public String getTransactionId() { return transactionId; }
-        public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
 
         // Overriding equals() method to compare TransactionResponseDTO objects by their fields
         @Override

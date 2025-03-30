@@ -1,5 +1,6 @@
 package com.bankingSystem.services;
 
+import com.bankingSystem.exceptions.UserNotFoundException;
 import com.bankingSystem.models.Account;
 import com.bankingSystem.models.Transaction;
 import com.bankingSystem.models.Users;
@@ -39,6 +40,24 @@ public class UsersService extends Users {
     }
     public Optional<Users> getByUserId(UUID userId) {
         return usersRepository.findByUserId(userId);
+    }
+    public ResponseEntity<String> deleteUser(UUID userId) throws UserNotFoundException {
+        // Check if the user exists in the database
+        Users user = usersRepository.findByUserId(userId)
+                .orElseThrow(()-> new UserNotFoundException("User not found", "Criteria: UUID", "UUID" + userId.toString()));
+
+        // Perform any additional cascading deletions if needed
+        // Example: Deleting associated accounts and transactions
+
+        List<Account> userAccounts = accountRepository.findByUserId(user.getUserId());
+        for (Account account : userAccounts) {
+            accountRepository.delete(account);
+        }
+
+        // Finally, delete the user
+        usersRepository.delete(user);
+
+        return new ResponseEntity<>("User with ID " + userId + " has been deleted successfully.", HttpStatus.OK);
     }
 
     public String getNameByUserAccountNumber(String accountNumber) {
@@ -159,7 +178,7 @@ public class UsersService extends Users {
         response.setReceiverAccNumber(transaction.getReceiver());
         response.setAmount(transaction.getAmount());
         response.setTransactionId(transaction.getTransactionId());
-        response.setTimestamp(transaction.getTimestamp());
+        response.setTimestamp(transaction.getTimestamp().toString());
         response.setDescription(transaction.getDescription());
         response.setCurrency(transaction.getCurrency());
         return response;
@@ -172,7 +191,7 @@ public class UsersService extends Users {
         response.setReceiverAccNumber(transaction.getReceiver());
         response.setAmount(transaction.getAmount());
         response.setTransactionId(transaction.getTransactionId());
-        response.setTimestamp(transaction.getTimestamp());
+        response.setTimestamp(transaction.getTimestamp().toString());
         response.setDescription(transaction.getDescription());
         response.setCurrency(transaction.getCurrency());
         response.setToCurrency(transaction.getToCurrency());

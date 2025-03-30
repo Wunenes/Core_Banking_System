@@ -3,9 +3,15 @@ package com.bankingSystem.models;
 import com.bankingSystem.encryption.AttributeEncryptor;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "app_users")
 public class Users {
@@ -33,53 +39,13 @@ public class Users {
     private String phoneNumber;
 
     @Column(nullable = false)
+    @CreatedDate
     LocalDateTime time;
 
     public Users() {}
 
-    public Users(String userName, String email, String idNumber, String phoneNumber) {
-        this.userName = userName;
-        this.email = email;
-        this.idNumber = idNumber;
-        this.phoneNumber = phoneNumber;
-        this.time = LocalDateTime.now();
-    }
-
     @PrePersist
     protected void onCreate() {
-        this.time = LocalDateTime.now();
         this.userId = UUID.randomUUID();
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-    public UUID getUserId(){
-        return userId;
-    }
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-    public String getIdNumber() {
-        return idNumber;
-    }
-    public String getEmail() {
-        return email;
-    }
-    public LocalDateTime getTime(){
-        return time;
-    }
-    public void setUserName(String userName){
-
-        this.userName = userName;
-    }
-    public void setEmail(String email){
-        this.email = email;
-    }
-    public void setIdNumber(String ID){
-        this.idNumber = ID;
-    }
-    public void setPhoneNumber(String phoneNumber){
-        this.phoneNumber = phoneNumber;
     }
 }

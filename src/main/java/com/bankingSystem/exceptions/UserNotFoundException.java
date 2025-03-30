@@ -1,11 +1,22 @@
 package com.bankingSystem.exceptions;
 
+import lombok.Getter;
+
 /**
  * Exception thrown when a requested user cannot be found in the system.
  * This is a checked exception as user lookup failures should be explicitly handled.
  */
+@Getter
 public class UserNotFoundException extends Exception {
+    /**
+     * -- GETTER --
+     *
+     */
     private final String userIdentifier;
+    /**
+     * -- GETTER --
+     *
+     */
     private final String searchCriteria;
 
     /**
@@ -29,20 +40,6 @@ public class UserNotFoundException extends Exception {
         super(message);
         this.userIdentifier = userIdentifier;
         this.searchCriteria = searchCriteria;
-    }
-
-    /**
-     * @return the user identifier that caused the exception
-     */
-    public String getUserIdentifier() {
-        return userIdentifier;
-    }
-
-    /**
-     * @return the type of search criteria used
-     */
-    public String getSearchCriteria() {
-        return searchCriteria;
     }
 
     /**
