@@ -136,7 +136,6 @@ public class TransactionService {
             this.fromCurrency = fromCurrency;
         }
 
-        // Overriding equals() method to compare TransactionResponseDTO objects by their fields
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -154,7 +153,6 @@ public class TransactionService {
             return Objects.hash(senderAccNumber, receiverAccNumber, timestamp, amount, transactionId);
         }
     }
-
 
     public ResponseEntity<TransactionResponseDTO> getByTransactionId(String transactionId) {
         Transaction transaction = transactionRepository.findByTransactionId(transactionId);

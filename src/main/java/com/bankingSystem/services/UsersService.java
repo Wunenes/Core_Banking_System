@@ -97,6 +97,7 @@ public class UsersService extends Users {
         }
     }
 
+    @Cacheable("accounts")
     public ResponseEntity<List<AccountService.AccountResponseDTO>> getUserAccountsDetails(String email){
         Optional<Users> user = usersRepository.findByEmail(email);
         if (user.isPresent()) {
@@ -114,6 +115,7 @@ public class UsersService extends Users {
         }
     }
 
+    @Cacheable("transactions")
     public ResponseEntity<List<List<TransactionService.TransactionResponseDTO>>> getTransactions(String email){
         Optional<Users> user = usersRepository.findByEmail(email);
         if (user.isPresent()) {
