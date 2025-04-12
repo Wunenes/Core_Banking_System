@@ -112,7 +112,7 @@ public class TransactionService {
         private String fromCurrency;
         private String transactionId;
 
-        public TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency) {
+        TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency) {
             this.senderAccNumber = sender;
             this.receiverAccNumber = receiver;
             this.amount = amount;
@@ -124,7 +124,7 @@ public class TransactionService {
             this.fromCurrency = null;
         }
 
-        public TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency, String toCurrency, String fromCurrency) {
+        TransactionResponseDTO(String sender, String receiver, String transactionId, BigDecimal amount, String timeStamp, String description, String currency, String toCurrency, String fromCurrency) {
             this.senderAccNumber = sender;
             this.receiverAccNumber = receiver;
             this.amount = amount;

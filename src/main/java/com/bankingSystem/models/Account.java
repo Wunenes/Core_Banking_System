@@ -13,7 +13,12 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "accounts")
+@Table(name = "accounts",
+       indexes = {
+               @Index(name = "idx_user_id", columnList = "userId"),
+               @Index(name = "idx_account_number", columnList = "accountNumber"),
+               @Index(name = "idx_currency_type", columnList = "currencyType"),
+       })
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,7 +37,6 @@ public class Account {
     private String status;
 
     @Column(nullable = false)
-    @CreatedDate
     private LocalDateTime time;
 
     @Column(nullable = false, unique = true)
@@ -45,14 +49,16 @@ public class Account {
     @Column(nullable = false)
     protected BigDecimal balance;
 
-    public Account() {}
+    public Account() {
+        this.time = LocalDateTime.now();
+    }
 
-    public void debit(BigDecimal amount) {
+    public synchronized void debit(BigDecimal amount) {
         BigDecimal newBalance = balance.subtract(amount);
         setBalance(newBalance);
     }
 
-    public void credit(BigDecimal finalAmount) {
+    public synchronized void credit(BigDecimal finalAmount) {
         BigDecimal newBalance = balance.add(finalAmount);
         setBalance(newBalance);
     }

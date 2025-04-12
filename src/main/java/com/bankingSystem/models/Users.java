@@ -42,7 +42,9 @@ public class Users {
     @CreatedDate
     LocalDateTime time;
 
-    public Users() {}
+    public Users() {
+        this.time = LocalDateTime.now();
+    }
 
     @PrePersist
     protected void onCreate() {

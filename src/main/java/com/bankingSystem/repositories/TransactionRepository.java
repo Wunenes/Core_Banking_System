@@ -14,6 +14,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
     List<Transaction> findBySender(@Param("senderAccountNumber") String senderAccountNumber);
     @Query("SELECT t FROM Transaction t WHERE t.sender= :accountNumber OR t.receiver = :accountNumber ORDER BY t.timestamp DESC")
     List<Transaction> findAllByAccount(@Param("accountNumber") String accountNumber);
-    List<Transaction> findByReceiver(@Param("senderAccountNumber") String receiverAccountNumber);
+    List<Transaction> findByReceiver(@Param("receiverAccountNumber") String receiverAccountNumber);
 
 }

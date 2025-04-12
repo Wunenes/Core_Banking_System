@@ -8,6 +8,7 @@ import com.bankingSystem.repositories.AccountRepository;
 import com.bankingSystem.repositories.TransactionRepository;
 import com.bankingSystem.repositories.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -101,9 +102,6 @@ public class UsersService extends Users {
         if (user.isPresent()) {
             UUID userId = user.get().getUserId();
             List<Account> accounts = accountRepository.findByUserId(userId);
-            if (accounts.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
-            }
 
             List<AccountService.AccountResponseDTO> responseList = accounts.stream()
                     .map(this::getAccountResponseDTO)
@@ -116,17 +114,17 @@ public class UsersService extends Users {
         }
     }
 
-    public ArrayList<List<TransactionService.TransactionResponseDTO>> getTransactions(String email){
+    public ResponseEntity<List<List<TransactionService.TransactionResponseDTO>>> getTransactions(String email){
         Optional<Users> user = usersRepository.findByEmail(email);
         if (user.isPresent()) {
             UUID userId = user.get().getUserId();
             List<Account> accounts = accountRepository.findByUserId(userId);
-            ArrayList<List<TransactionService.TransactionResponseDTO>> userTransactions = new ArrayList<>();
+            List<List<TransactionService.TransactionResponseDTO>> userTransactions = new ArrayList<>();
 
             for (Account account : accounts) {
                 List<Transaction> transactions = transactionRepository.findAllByAccount(account.getAccountNumber());
                 if (transactions.isEmpty()) {
-                    return userTransactions;
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
                 }
 
                 List<TransactionService.TransactionResponseDTO> responseList = transactions.stream()
@@ -146,20 +144,19 @@ public class UsersService extends Users {
                         }
                     }
                 }
-
-
                 if (userTransactions.contains(responseList)) {
                     continue;
                 }
 
                 userTransactions.add(responseList);
             }
-
-            return userTransactions;
+            return ResponseEntity.ok(userTransactions);
         } else{
-            return new ArrayList<>();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonList(Collections.singletonList(new TransactionService.TransactionResponseDTO())));
         }
     }
+
     private AccountService.AccountResponseDTO getAccountResponseDTO(Account userAccount) {
         AccountService.AccountResponseDTO response = new AccountService.AccountResponseDTO(userAccount.getAccountType(),
                 userAccount.getStatus(), userAccount.getBalance(), userAccount.getCurrencyType(), userAccount.getAccountNumber());

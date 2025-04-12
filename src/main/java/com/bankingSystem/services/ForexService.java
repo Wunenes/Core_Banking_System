@@ -67,7 +67,7 @@ public class ForexService {
 
     }
 
-    public double getRates(String fromCurrency, String toCurrency) {
+    double getRates(String fromCurrency, String toCurrency) {
         try {
             String urlString = String.format("https://v6.exchangerate-api.com/v6/%s/pair/%s/%s/1.00",
                     forexApiKey, fromCurrency, toCurrency);
@@ -92,7 +92,7 @@ public class ForexService {
         }
     }
 
-    public Account createNewAccount(Users user, String toCurrency) {
+    private Account createNewAccount(Users user, String toCurrency) {
         return accountService.createAccount(UsersService.accountBuilder(user, toCurrency, "Active"));
     }
 

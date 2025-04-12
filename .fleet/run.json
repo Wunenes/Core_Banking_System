@@ -1,0 +1,9 @@
+{
+    "configurations": [
+        {
+            "type": "java-source-run",
+            "name": "Java-source-run configuration",
+            "sourceFile": "C:/Users/munen/IdeaProjects/CBS sample/src/main/java/com/bankingSystem/BankingSystemApplication.java"
+        }
+    ]
+}

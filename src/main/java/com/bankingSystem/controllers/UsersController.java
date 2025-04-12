@@ -9,9 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 
 @RestController
@@ -25,7 +23,7 @@ public class UsersController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<String> deleteUser(@RequestBody String email) throws UserNotFoundException {
+    public ResponseEntity<String> deleteUser(@RequestParam String email) throws UserNotFoundException {
         Users user = usersService.getByEmail(email)
                 .orElseThrow(()-> new UserNotFoundException("User not found", "Criteria: Email: ", email));
 
@@ -43,7 +41,7 @@ public class UsersController {
     }
 
     @GetMapping("/get/transactions")
-    public ArrayList<List<TransactionService.TransactionResponseDTO>> getTransactionDetails(@RequestParam String email) {
+    public ResponseEntity<List<List<TransactionService.TransactionResponseDTO>>> getTransactionDetails(@RequestParam String email) {
         return usersService.getTransactions(email);
     }
 }
